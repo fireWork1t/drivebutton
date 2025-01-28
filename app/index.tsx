@@ -37,6 +37,7 @@ export default function Index() {
     setIsPaused(false);
     setIntervalId(null);
     logDriveData();
+    setTimer(0);
   };
 
   const logDriveData = () => {
