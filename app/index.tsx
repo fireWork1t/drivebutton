@@ -76,8 +76,21 @@ export default function Index() {
         <Button title="Drive" onPress={handleDrive} />
       ) : (
         <>
-          <Text style={styles.text}>{`Timer: ${timer} seconds`}</Text>
+          <View style={styles.timerContainer}>
+            {timer >= 3600 && (
+              <>
+                <Text style={styles.biggertext}>{`${Math.floor(timer/3600)}`}</Text>
+                <Text style={styles.text}> hr   </Text>
+              </>
+            )}
+            <Text style={styles.biggertext}>{`${Math.floor((timer % 3600) / 60)}`}</Text>
+            <Text style={styles.text}> min   </Text>
+            <Text style={styles.biggertext}>{`${timer % 60}`}</Text>
+            <Text style={styles.text}> sec</Text>
+          </View>
+          <br></br>
           <Button title={isPaused ? "Resume" : "Pause"} onPress={handlePause} />
+          <br></br>
           <Button title="Stop" onPress={handleStop} />
         </>
       )}
@@ -96,6 +109,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  timerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   button: {
     fontSize: 32,
     width: 50,
@@ -104,6 +121,10 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 32,
-    margin: 10,
+    
+  },
+  biggertext: {
+    fontSize: 45,
+    
   },
 });

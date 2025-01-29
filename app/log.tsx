@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Text, Button, View, StyleSheet } from 'react-native';
 import { getItem, clear } from './AsyncStorage';
+import { Link } from 'expo-router';
 
 function refreshData(setData: React.Dispatch<React.SetStateAction<string | null>>) {
   getItem("driveData").then(items => {
@@ -43,6 +44,10 @@ export default function LogScreen() {
       <Text style={styles.text}>{data}</Text>
       <br></br>
       <Button title="Clear Data" onPress={() => clearAndRefresh(setData)} />
+      <br></br>
+      <Link href="/" style={styles.text}>
+              Back
+            </Link>
     </View>
   );
 }
