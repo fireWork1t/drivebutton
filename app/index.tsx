@@ -50,14 +50,20 @@ export default function Index() {
 
 
     
-    const tempData = await getItem("driveData");
-
-    tempData.push(driveData[0]);
-
+    var tempData = await getItem("driveData");
+    if (tempData)
+    {
+      tempData.push(driveData[0]);
+      setItem("driveData", tempData);
+    }
+    else
+    {
+      setItem("driveData", driveData);
+    }
 
 
     
-    setItem("driveData", tempData);
+    
     
 
     console.log("Drive Data:", await getItem("driveData"));

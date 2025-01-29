@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View, StyleSheet } from 'react-native';
-import { getItem } from './AsyncStorage';
+import { Text, Button, View, StyleSheet } from 'react-native';
+import { getItem, clear } from './AsyncStorage';
 
 function refreshData(setData: React.Dispatch<React.SetStateAction<string | null>>) {
   getItem("driveData").then(items => {
@@ -18,8 +18,16 @@ function refreshData(setData: React.Dispatch<React.SetStateAction<string | null>
       }
     }
     setData(data);
+    if (data === "null") {
+      setData("No data to display");
+    }
   });
 }
+
+function clearAndRefresh(setData: React.Dispatch<React.SetStateAction<string | null>>) {
+  clear().then(() => refreshData(setData));
+}
+
 
 export default function LogScreen() {
   const [data, setData] = useState<string | null>(null);
@@ -33,6 +41,8 @@ export default function LogScreen() {
       <Text style={styles.text}>Log screen</Text>
       <br></br>
       <Text style={styles.text}>{data}</Text>
+      <br></br>
+      <Button title="Clear Data" onPress={() => clearAndRefresh(setData)} />
     </View>
   );
 }
