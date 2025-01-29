@@ -73,7 +73,11 @@ export default function Index() {
     <View style={styles.container}>
 
       {!isDriving ? (
-        <Button title="Drive" onPress={handleDrive} />
+        <><Button title="Drive" onPress={handleDrive} />
+        <br></br>
+        <Link href="./log">
+          Go to Log screen
+        </Link></>
       ) : (
         <>
           <View style={styles.timerContainer}>
@@ -95,9 +99,7 @@ export default function Index() {
         </>
       )}
 
-    <Link href="./log" style={styles.text}>
-        Go to Log screen
-      </Link>
+    
 
     </View>
   );
