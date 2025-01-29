@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, Button } from "react-native";
+import { Text, View, Button, StyleSheet } from "react-native";
+import {setItem, getItem, clear, removeItem, getAllKeys, getAllItems, mergeItem} from "./AsyncStorage";
+import { Link } from 'expo-router';
 
 export default function Index() {
   const [isDriving, setIsDriving] = useState(false);
@@ -40,25 +42,62 @@ export default function Index() {
     setTimer(0);
   };
 
-  const logDriveData = () => {
-    const driveData = {
+  const logDriveData = async () => {
+    const driveData = [{
       duration: timer,
       timestamp: new Date().toISOString(),
-    };
-    console.log("Drive Data:", JSON.stringify(driveData, null, 2));
+    }];
+
+
+    
+    const tempData = await getItem("driveData");
+
+    tempData.push(driveData[0]);
+
+
+
+    
+    setItem("driveData", tempData);
+    
+
+    console.log("Drive Data:", await getItem("driveData"));
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+    <View style={styles.container}>
+
       {!isDriving ? (
         <Button title="Drive" onPress={handleDrive} />
       ) : (
         <>
-          <Text>{`Timer: ${timer} seconds`}</Text>
+          <Text style={styles.text}>{`Timer: ${timer} seconds`}</Text>
           <Button title={isPaused ? "Resume" : "Pause"} onPress={handlePause} />
           <Button title="Stop" onPress={handleStop} />
         </>
       )}
+
+    <Link href="./log" style={styles.text}>
+        Go to Log screen
+      </Link>
+
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  button: {
+    fontSize: 32,
+    width: 50,
+    height: 50,
+    margin: 20,
+  },
+  text: {
+    fontSize: 32,
+    margin: 10,
+  },
+});
