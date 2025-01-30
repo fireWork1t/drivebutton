@@ -76,7 +76,7 @@ export default function Index() {
 
       {!isDriving ? (
         <><Button title="Drive" onPress={handleDrive} />
-        <br></br>
+        
         <Link href="./log">
           Go to Log screen
         </Link></>
@@ -94,9 +94,9 @@ export default function Index() {
             <Text style={styles.biggertext}>{`${timer % 60}`}</Text>
             <Text style={styles.text}> sec</Text>
           </View>
-          <br></br>
+          
           <Button title={isPaused ? "Resume" : "Pause"} onPress={handlePause} />
-          <br></br>
+          
           <Button title="Stop" onPress={handleStop} />
         </>
       )}

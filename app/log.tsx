@@ -108,10 +108,14 @@ export default function LogScreen() {
 
   return (
     <View style={styles.container}>
-      <br></br>
-      <Text style={styles.text}>Driving Log</Text>
-      <br></br>
+      
+      
+      
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
+
+      <View style={styles.emptySpaceSmall}></View>
+
+
         {data.map((entry, rowIndex) => (
           <View key={rowIndex} style={styles.row}>
             {entry.map((item, colIndex) => (
@@ -133,15 +137,16 @@ export default function LogScreen() {
             )}
           </View>
         ))}
+
+        <View style={styles.emptySpace}></View>
        </ScrollView>
+
       <View style={styles.buttonContainer}>
-      <Link href="/" style={styles.text}>
-          Back
-        </Link>
+      
         <Button title="Clear Data" onPress={() => clearAndRefresh(setData)} />
         
       </View>
-     <br></br>
+     
       <Modal
         transparent={true}
         visible={modalVisible}
@@ -189,9 +194,16 @@ const styles = StyleSheet.create({
   button: {
     margin: 10
   },
+  emptySpace: {
+    height: 200,
+  },
+  emptySpaceSmall: {
+    height: 50,
+  },
   scrollViewContent: {
     alignItems: 'center',
     paddingBottom: 20,
+    
   },
   row: {
     backgroundColor: '#444',
