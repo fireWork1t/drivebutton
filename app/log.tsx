@@ -1,39 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { Text, Button, View, StyleSheet, TouchableOpacity, Modal, Animated, ScrollView } from 'react-native';
+import { Text, Button, View, StyleSheet, TouchableOpacity, Modal, Animated, ScrollView, Platform } from 'react-native';
 import { getItem, clear, setItem } from './AsyncStorage';
 import { Link } from 'expo-router';
-
-
+import { Ionicons } from '@expo/vector-icons'; // Add this import
 
 function refreshData(setData: React.Dispatch<React.SetStateAction<string[][]>>) {
   getItem("driveData").then(items => {
     if (items && items.length > 0) {
-
       const keys = Object.keys(items[0]);
-
       const data: string[][] = [keys];
-
       items.forEach((item: { [key: string]: any }) => {
-
         data.push(keys.map(key => {
-
           if (key === "date") {
-
             const date = new Date(item[key]);
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
-          } 
-          
-          else if (key === "duration") {
-
+          } else if (key === "duration") {
             const duration = item[key];
-
             if (duration >= 3600) {
               const hours = Math.floor(duration / 3600);
               const minutes = Math.round((duration % 3600) / 60);
               return `${hours} hr ${minutes} min`;
-            } 
-            else {
+            } else {
               const minutes = Math.round(duration / 60);
               return `${minutes} min`;
             }
@@ -48,13 +35,9 @@ function refreshData(setData: React.Dispatch<React.SetStateAction<string[][]>>) 
   });
 }
 
-
-
 function clearAndRefresh(setData: React.Dispatch<React.SetStateAction<string[][]>>) {
   clear().then(() => refreshData(setData));
 }
-
-
 
 function deleteDrive(rowIndex: number, setData: React.Dispatch<React.SetStateAction<string[][]>>) {
   getItem("driveData").then(items => {
@@ -64,9 +47,6 @@ function deleteDrive(rowIndex: number, setData: React.Dispatch<React.SetStateAct
     }
   });
 }
-
-
-
 
 export default function LogScreen() {
   const [data, setData] = useState<string[][]>([["Loading..."]]);
@@ -108,14 +88,8 @@ export default function LogScreen() {
 
   return (
     <View style={styles.container}>
-      
-      
-      
-      <ScrollView contentContainerStyle={styles.scrollViewContent}>
-
-      <View style={styles.emptySpaceSmall}></View>
-
-
+      <ScrollView contentContainerStyle={styles.scrollViewContent} showsHorizontalScrollIndicator={Platform.OS === 'web'}>
+        <View style={styles.emptySpaceSmall}></View>
         {data.map((entry, rowIndex) => (
           <View key={rowIndex} style={styles.row}>
             {entry.map((item, colIndex) => (
@@ -132,21 +106,16 @@ export default function LogScreen() {
                 style={styles.deleteButton}
                 onPress={() => handleDeletePress(rowIndex, entry)}
               >
-                <Text style={styles.deleteButtonText}>Delete</Text>
+                <Ionicons name="trash" size={24} color="white" /> {/* Replace Text with Icon */}
               </TouchableOpacity>
             )}
           </View>
         ))}
-
-        <View style={styles.emptySpace}></View>
-       </ScrollView>
-
-      <View style={styles.buttonContainer}>
-      
-        <Button title="Clear Data" onPress={() => clearAndRefresh(setData)} />
         
+      </ScrollView>
+      <View style={styles.buttonContainer}>
+        <Button title="Clear Data" onPress={() => clearAndRefresh(setData)} />
       </View>
-     
       <Modal
         transparent={true}
         visible={modalVisible}
@@ -195,7 +164,7 @@ const styles = StyleSheet.create({
     margin: 10
   },
   emptySpace: {
-    height: 200,
+    height: Platform.OS === 'web' ? 300 : 550, // Adjust height based on platform
   },
   emptySpaceSmall: {
     height: 50,
@@ -203,38 +172,50 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     alignItems: 'center',
     paddingBottom: 20,
-    
   },
   row: {
     backgroundColor: '#444',
-    padding: 10,
+    padding: 5,
     marginVertical: 5,
     borderRadius: 10,
-    width: '90%',
+    width: '95%',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   item: {
     backgroundColor: '#555',
-    padding: 10,
-    margin: 5,
-    borderRadius: 10,
+    padding: 5,
+    margin: 2,
+    borderRadius: 5,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center', // Center vertically
+    height: 50,
   },
   rowText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 16,
+    textAlign: 'center', // Center horizontally
+  },
+  dot: {
+    color: '#fff',
+    fontSize: 16,
+    marginHorizontal: 5,
   },
   deleteButton: {
     backgroundColor: 'red',
-    padding: 10,
-    margin: 5,
-    borderRadius: 10,
+    padding: 5,
+    margin: 2,
+    borderRadius: 5,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   deleteButtonText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 16,
   },
   buttonContainer: {
     flexDirection: 'row',
