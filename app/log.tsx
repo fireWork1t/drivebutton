@@ -3,12 +3,14 @@ import { Text, Button, View, StyleSheet, TouchableOpacity, Modal, Animated, Scro
 import { getItem, clear, setItem } from './AsyncStorage';
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons'; // Add this import
+import EditModal from './EditModal'; // Import EditModal
 
 function refreshData(setData: React.Dispatch<React.SetStateAction<string[][]>>) {
   getItem("driveData").then(items => {
     if (items && items.length > 0) {
       const keys = Object.keys(items[0]);
       const data: string[][] = [keys];
+
       items.forEach((item: { [key: string]: any }) => {
         data.push(keys.map(key => {
           if (key === "date") {
@@ -28,6 +30,7 @@ function refreshData(setData: React.Dispatch<React.SetStateAction<string[][]>>) 
           return item[key].toString();
         }));
       });
+
       setData(data);
     } else {
       setData([["No data available"]]);
@@ -52,6 +55,7 @@ export default function LogScreen() {
   const [data, setData] = useState<string[][]>([["Loading..."]]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
+  const [selectedCol, setSelectedCol] = useState<number | null>(null); // Add state for selected column
   const [selectedEntry, setSelectedEntry] = useState<string[] | null>(null);
   const [fadeAnim] = useState(new Animated.Value(0));
 
@@ -59,9 +63,19 @@ export default function LogScreen() {
     refreshData(setData);
   }, []);
 
-  const handleItemClick = (rowIndex: number, colIndex: number) => {
-    // Blank function for now
-    console.log(`Clicked item at row ${rowIndex}, column ${colIndex}`);
+  const editItem = (targetValue: string, rowIndex: number, colIndex: number) => {
+    getItem("driveData").then(items => {
+      if (items && items.length > 0) {
+        items[rowIndex - 1][Object.keys(items[0])[colIndex]] = targetValue; // Set the item to targetValue
+        setItem("driveData", items).then(() => refreshData(setData));
+      }
+    });
+  };
+
+  const handleItemPress = (rowIndex: number, colIndex: number) => {
+    setSelectedRow(rowIndex);
+    setSelectedCol(colIndex);
+    setModalVisible(true);
   };
 
   const handleDeletePress = (rowIndex: number, entry: string[]) => {
@@ -90,13 +104,13 @@ export default function LogScreen() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent} showsHorizontalScrollIndicator={Platform.OS === 'web'}>
         <View style={styles.emptySpaceSmall}></View>
-        {data.map((entry, rowIndex) => (
+        {data.map((entry, rowIndex) => ( // Ensure data is being displayed
           <View key={rowIndex} style={styles.row}>
             {entry.map((item, colIndex) => (
               <TouchableOpacity
                 key={colIndex}
                 style={styles.item}
-                onPress={() => handleItemClick(rowIndex, colIndex)}
+                onPress={() => handleItemPress(rowIndex, colIndex)}
               >
                 <Text style={styles.rowText}>{item}</Text>
               </TouchableOpacity>
@@ -145,6 +159,13 @@ export default function LogScreen() {
           </View>
         </Animated.View>
       </Modal>
+      <EditModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onSave={editItem}
+        rowIndex={selectedRow ?? 0}
+        colIndex={selectedCol ?? 0}
+      />
     </View>
   );
 }
