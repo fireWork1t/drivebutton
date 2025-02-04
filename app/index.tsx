@@ -24,26 +24,26 @@ export default function Index() {
     };
   }, [isDriving, isPaused]);
 
-  const handleDrive = () => {
+  function handleDrive() {
     setTimer(3590);
     setIsDriving(true);
     setIsPaused(false);
-  };
+  }
 
-  const handlePause = () => {
+  function handlePause() {
     setIsPaused(!isPaused);
-  };
+  }
 
-  const handleStop = () => {
+  function handleStop() {
     if (intervalId) clearInterval(intervalId);
     setIsDriving(false);
     setIsPaused(false);
     setIntervalId(null);
     logDriveData();
     setTimer(0);
-  };
+  }
 
-  const logDriveData = async () => {
+  async function logDriveData() {
     const driveData = [{
       date: new Date().toISOString(),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -59,7 +59,7 @@ export default function Index() {
     }
 
     console.log("Drive Data:", await getItem("driveData"));
-  };
+  }
 
   return (
     <View style={styles.container}>

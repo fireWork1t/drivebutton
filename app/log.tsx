@@ -63,22 +63,22 @@ export default function LogScreen() {
     refreshData(setData);
   }, []);
 
-  const editItem = (targetValue: string, rowIndex: number, colIndex: number) => {
+  function editItem(targetValue: string, rowIndex: number, colIndex: number) {
     getItem("driveData").then(items => {
-      if (items && items.length > 0) {
+      if (items && items.length > 0) {          // if items exists and isn't empty
         items[rowIndex - 1][Object.keys(items[0])[colIndex]] = targetValue; // Set the item to targetValue
         setItem("driveData", items).then(() => refreshData(setData));
       }
     });
-  };
+  }
 
-  const handleItemPress = (rowIndex: number, colIndex: number) => {
+  function handleItemPress(rowIndex: number, colIndex: number) {
     setSelectedRow(rowIndex);
     setSelectedCol(colIndex);
     setModalVisible(true);
-  };
+  }
 
-  const handleDeletePress = (rowIndex: number, entry: string[]) => {
+  function handleDeletePress(rowIndex: number, entry: string[]) {
     setSelectedRow(rowIndex);
     setSelectedEntry(entry);
     setModalVisible(true);
@@ -87,18 +87,18 @@ export default function LogScreen() {
       duration: 300,
       useNativeDriver: true,
     }).start();
-  };
+  }
 
-  const handleDeleteConfirm = () => {
+  function handleDeleteConfirm() {
     if (selectedRow !== null) {
       deleteDrive(selectedRow, setData);
     }
     setModalVisible(false);
-  };
+  }
 
-  const handleDeleteCancel = () => {
+  function handleDeleteCancel() {
     setModalVisible(false);
-  };
+  }
 
   return (
     <View style={styles.container}>
