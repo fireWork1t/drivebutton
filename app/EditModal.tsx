@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 
 interface EditModalProps {
@@ -7,10 +7,17 @@ interface EditModalProps {
   onSave: (targetValue: string, rowIndex: number, colIndex: number) => void;
   rowIndex: number;
   colIndex: number;
+  currentValue: string; // Add currentValue prop
 }
 
-const EditModal: React.FC<EditModalProps> = ({ visible, onClose, onSave, rowIndex, colIndex }) => {
+const EditModal: React.FC<EditModalProps> = ({ visible, onClose, onSave, rowIndex, colIndex, currentValue }) => {
   const [inputValue, setInputValue] = useState('');
+
+  useEffect(() => {
+    if (visible) {
+      setInputValue(currentValue); // Autofill the text box with the current value
+    }
+  }, [visible, currentValue]);
 
   const handleSave = () => {
     onSave(inputValue, rowIndex, colIndex);

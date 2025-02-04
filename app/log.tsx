@@ -53,10 +53,12 @@ function deleteDrive(rowIndex: number, setData: React.Dispatch<React.SetStateAct
 
 export default function LogScreen() {
   const [data, setData] = useState<string[][]>([["Loading..."]]);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false); // Separate variable for edit modal
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false); // Separate variable for delete modal
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [selectedCol, setSelectedCol] = useState<number | null>(null); // Add state for selected column
   const [selectedEntry, setSelectedEntry] = useState<string[] | null>(null);
+  const [currentValue, setCurrentValue] = useState<string>(''); // Add state for current value
   const [fadeAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
@@ -66,7 +68,24 @@ export default function LogScreen() {
   function editItem(targetValue: string, rowIndex: number, colIndex: number) {
     getItem("driveData").then(items => {
       if (items && items.length > 0) {          // if items exists and isn't empty
-        items[rowIndex - 1][Object.keys(items[0])[colIndex]] = targetValue; // Set the item to targetValue
+
+        var numValue = null;
+
+        if (!isNaN(Number(targetValue)))
+        {
+            numValue = Number(targetValue);
+        }
+
+        if (numValue)
+        {
+          items[rowIndex - 1][Object.keys(items[0])[colIndex]] = numValue;
+        }
+        else
+        {
+          items[rowIndex - 1][Object.keys(items[0])[colIndex]] = targetValue; // Set the item to targetValue
+        }
+        
+
         setItem("driveData", items).then(() => refreshData(setData));
       }
     });
@@ -75,13 +94,14 @@ export default function LogScreen() {
   function handleItemPress(rowIndex: number, colIndex: number) {
     setSelectedRow(rowIndex);
     setSelectedCol(colIndex);
-    setModalVisible(true);
+    setCurrentValue(data[rowIndex][colIndex]); // Set the current value
+    setEditModalVisible(true);
   }
 
   function handleDeletePress(rowIndex: number, entry: string[]) {
     setSelectedRow(rowIndex);
     setSelectedEntry(entry);
-    setModalVisible(true);
+    setDeleteModalVisible(true);
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 300,
@@ -93,11 +113,11 @@ export default function LogScreen() {
     if (selectedRow !== null) {
       deleteDrive(selectedRow, setData);
     }
-    setModalVisible(false);
+    setDeleteModalVisible(false);
   }
 
   function handleDeleteCancel() {
-    setModalVisible(false);
+    setDeleteModalVisible(false);
   }
 
   return (
@@ -132,7 +152,7 @@ export default function LogScreen() {
       </View>
       <Modal
         transparent={true}
-        visible={modalVisible}
+        visible={deleteModalVisible}
         animationType="fade"
         onRequestClose={handleDeleteCancel}
       >
@@ -160,11 +180,12 @@ export default function LogScreen() {
         </Animated.View>
       </Modal>
       <EditModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
+        visible={editModalVisible}
+        onClose={() => setEditModalVisible(false)}
         onSave={editItem}
         rowIndex={selectedRow ?? 0}
         colIndex={selectedCol ?? 0}
+        currentValue={currentValue} // Pass the current value
       />
     </View>
   );
