@@ -45,7 +45,7 @@ export default function Index() {
 
   async function logDriveData() {
     const driveData = [{
-      date: new Date().toISOString(),
+      date: new Date().toISOString().substring(0, new Date().toISOString().indexOf('T')),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       duration: timer,
     }];
