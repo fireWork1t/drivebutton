@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
 import { getItem, setItem, removeItem, getAllItems } from './AsyncStorage';
+import Multiselect from 'multiselect-react-dropdown';
+import Select from 'react-select';
 
 const UserData = () => {
   const [inputValue, setInputValue] = useState('');
@@ -8,6 +10,8 @@ const UserData = () => {
   const [nameEntered, setNameEntered] = useState(false); // Use state for nameEntered
   const [stateEntered, setStateEntered] = useState(false);
   const [screen, setScreen] = useState('welcome'); // Use state for screen
+  const [showNameError, setShowNameError] = useState(false);
+  let states: string[] = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"];
 
   useEffect(() => {
     checkFirstTime();
@@ -30,14 +34,14 @@ const UserData = () => {
     setIsButtonDisabled((text.trim() === '') || (text === null));
   }
 
-
-  function handleContinue()
-    {
-        setScreen('name');
-    }
+  function handleContinue() {
+    setScreen('name');
+  }
 
   async function handleNameSave() {
     if (inputValue.trim() !== '') {
+
+      if (inputValue.split(' ').length == 2) {
       setNameEntered(true); // Update state
       await setItem('userData', { name: inputValue });
       await setItem('firstTime', 'false');
@@ -46,8 +50,15 @@ const UserData = () => {
       setScreen('state');
       console.log(screen);
       setIsButtonDisabled(true);
+      }
+
+      else {
+        setShowNameError(true);
+      }
     }
   }
+
+  
 
   async function handleStateSave() {
     if (inputValue.trim() !== '') {
@@ -82,13 +93,17 @@ const UserData = () => {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Which state do you live in?</Text>
-        <TextInput
-          style={styles.textInput}
-          value={inputValue}
-          onChangeText={handleInputChange}
-          placeholder="Enter your state of residence"
-          placeholderTextColor="#888"
-        />
+        
+
+        
+
+<Select
+    
+    options={states.map((state) => ({ value: state, label: state }))}
+    placeholder="Select your state"
+    blurInputOnSelect={true}
+  />
+
         <TouchableOpacity
           style={[styles.saveButton, isButtonDisabled && styles.disabledButton]}
           onPress={handleStateSave}
@@ -98,7 +113,6 @@ const UserData = () => {
         </TouchableOpacity>
 
         <View style={styles.emptySpaceSmall}></View>
-
 
         <TouchableOpacity
           style={styles.backButton}
@@ -111,49 +125,48 @@ const UserData = () => {
     );
   }
 
-
   if (screen === 'name') {
-
     return (
-        <View style={styles.container}>
-          <Text style={styles.title}>Please enter your name.</Text>
-          <TextInput
-            style={styles.textInput}
-            value={inputValue}
-            onChangeText={handleInputChange}
-            placeholder="Enter your name"
-            placeholderTextColor="#888"
-            
-          />
-          <TouchableOpacity
-            style={[styles.saveButton, isButtonDisabled && styles.disabledButton]}
-            onPress={handleNameSave}
-            disabled={isButtonDisabled}
-          >
-            <Text style={styles.buttonText}>Save</Text>
-          </TouchableOpacity>
-        </View>
-      );
+      <View style={styles.container}>
+        <Text style={styles.title}>Please enter your legal name.</Text>
+        <TextInput
+          style={styles.textInput}
+          value={inputValue}
+          returnKeyType={'done'}
+          onChangeText={handleInputChange}
+          placeholder="First Last"
+          placeholderTextColor="#888"
+          onSubmitEditing={handleNameSave} // Call handleNameSave on Enter key press
+        />
+        <TouchableOpacity
+          style={[styles.saveButton, isButtonDisabled && styles.disabledButton]}
+          onPress={handleNameSave}
+          disabled={isButtonDisabled}
+        >
+          <Text style={styles.buttonText}>Save</Text>
+        </TouchableOpacity>
+        <Text style={styles.error}>{showNameError ? "Please enter a first and last name." : ""}</Text>
+      </View>
+    );
   }
 
-if (screen === 'welcome') {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.welcome}>welcome</Text>
-      <Text style={styles.header}>to set up your requirements,</Text>
-      <Text style={styles.header}>we need some quick info.</Text>
-      <TouchableOpacity
+  if (screen === 'welcome') {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.welcome}>welcome</Text>
+        <Text style={styles.header}>to set up your requirements,</Text>
+        <Text style={styles.header}>we need some quick info.</Text>
+        <TouchableOpacity
           style={styles.saveButton}
           onPress={handleContinue}
           disabled={false}
         >
           <Text style={styles.buttonText}>continue</Text>
         </TouchableOpacity>
-    </View>
-  );
-
-}
-  
+        
+      </View>
+    );
+  }
 };
 
 const styles = StyleSheet.create({
@@ -177,6 +190,12 @@ const styles = StyleSheet.create({
   title: {
     color: '#000',
     fontSize: 24,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  error: {
+    color: 'red',
+    fontSize: 16,
     marginBottom: 20,
     textAlign: 'center',
   },
