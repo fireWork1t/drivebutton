@@ -3,14 +3,12 @@ import { Text, Button, View, StyleSheet, TouchableOpacity, Modal, Animated, Scro
 import { getItem, clear, setItem } from './AsyncStorage';
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons'; // Add this import
-import EditModal from './EditModal'; // Import EditModal
 
 function refreshData(setData: React.Dispatch<React.SetStateAction<string[][]>>) {
   getItem("driveData").then(items => {
     if (items && items.length > 0) {
       const keys = Object.keys(items[0]);
       const data: string[][] = [keys];
-
       items.forEach((item: { [key: string]: any }) => {
         data.push(keys.map(key => {
           if (key === "date") {
@@ -30,7 +28,6 @@ function refreshData(setData: React.Dispatch<React.SetStateAction<string[][]>>) 
           return item[key].toString();
         }));
       });
-
       setData(data);
     } else {
       setData([["No data available"]]);
@@ -53,106 +50,79 @@ function deleteDrive(rowIndex: number, setData: React.Dispatch<React.SetStateAct
 
 export default function LogScreen() {
   const [data, setData] = useState<string[][]>([["Loading..."]]);
-  const [editModalVisible, setEditModalVisible] = useState(false); // Separate variable for edit modal
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false); // Separate variable for delete modal
+  const [modalVisible, setModalVisible] = useState(false);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
-  const [selectedCol, setSelectedCol] = useState<number | null>(null); // Add state for selected column
   const [selectedEntry, setSelectedEntry] = useState<string[] | null>(null);
-  const [currentValue, setCurrentValue] = useState<string>(''); // Add state for current value
   const [fadeAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
     refreshData(setData);
   }, []);
 
-  function editItem(targetValue: string, rowIndex: number, colIndex: number) {
-    getItem("driveData").then(items => {
-      if (items && items.length > 0) {          // if items exists and isn't empty
+  const handleItemClick = (rowIndex: number, colIndex: number) => {
+    // Blank function for now
+    console.log(`Clicked item at row ${rowIndex}, column ${colIndex}`);
+  };
 
-        var numValue = null;
-
-        if (!isNaN(Number(targetValue)))
-        {
-            numValue = Number(targetValue);
-        }
-
-        if (numValue)
-        {
-          items[rowIndex - 1][Object.keys(items[0])[colIndex]] = numValue;
-        }
-        else
-        {
-          items[rowIndex - 1][Object.keys(items[0])[colIndex]] = targetValue; // Set the item to targetValue
-        }
-        
-
-        setItem("driveData", items).then(() => refreshData(setData));
-      }
-    });
-  }
-
-  function handleItemPress(rowIndex: number, colIndex: number) {
-    setSelectedRow(rowIndex);
-    setSelectedCol(colIndex);
-    setCurrentValue(data[rowIndex][colIndex]); // Set the current value
-    setEditModalVisible(true);
-  }
-
-  function handleDeletePress(rowIndex: number, entry: string[]) {
+  const handleDeletePress = (rowIndex: number, entry: string[]) => {
     setSelectedRow(rowIndex);
     setSelectedEntry(entry);
-    setDeleteModalVisible(true);
+    setModalVisible(true);
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 300,
       useNativeDriver: true,
     }).start();
-  }
+  };
 
-  function handleDeleteConfirm() {
+  const handleDeleteConfirm = () => {
     if (selectedRow !== null) {
       deleteDrive(selectedRow, setData);
     }
-    setDeleteModalVisible(false);
-  }
+    setModalVisible(false);
+  };
 
-  function handleDeleteCancel() {
-    setDeleteModalVisible(false);
-  }
+  const handleDeleteCancel = () => {
+    setModalVisible(false);
+  };
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent} showsHorizontalScrollIndicator={Platform.OS === 'web'}>
         <View style={styles.emptySpaceSmall}></View>
-        {data.map((entry, rowIndex) => ( // Ensure data is being displayed
+        {data.map((entry, rowIndex) => (
           <View key={rowIndex} style={styles.row}>
             {entry.map((item, colIndex) => (
-              <TouchableOpacity
-                key={colIndex}
-                style={styles.item}
-                onPress={() => handleItemPress(rowIndex, colIndex)}
-              >
-                <Text style={styles.rowText}>{item}</Text>
-              </TouchableOpacity>
+              <React.Fragment key={colIndex}>
+                <TouchableOpacity
+                  style={styles.item}
+                  onPress={() => handleItemClick(rowIndex, colIndex)}
+                >
+                  <Text style={styles.rowText}>{item}</Text>
+                </TouchableOpacity>
+                {colIndex < entry.length - 1 && (
+                  <Text style={styles.dot}>•</Text>
+                )}
+              </React.Fragment>
             ))}
             {rowIndex > 0 && (
               <TouchableOpacity
-                style={styles.deleteButton}
+                style={[styles.deleteButton, { height: '100%' }]} // Adjust height to match the row
                 onPress={() => handleDeletePress(rowIndex, entry)}
               >
-                <Ionicons name="trash" size={24} color="white" /> {/* Replace Text with Icon */}
+                <Ionicons name="trash" size={24} color="white" />
               </TouchableOpacity>
             )}
           </View>
         ))}
-        
+        <View style={styles.emptySpace}></View>
       </ScrollView>
       <View style={styles.buttonContainer}>
         <Button title="Clear Data" onPress={() => clearAndRefresh(setData)} />
       </View>
       <Modal
         transparent={true}
-        visible={deleteModalVisible}
+        visible={modalVisible}
         animationType="fade"
         onRequestClose={handleDeleteCancel}
       >
@@ -179,14 +149,6 @@ export default function LogScreen() {
           </View>
         </Animated.View>
       </Modal>
-      <EditModal
-        visible={editModalVisible}
-        onClose={() => setEditModalVisible(false)}
-        onSave={editItem}
-        rowIndex={selectedRow ?? 0}
-        colIndex={selectedCol ?? 0}
-        currentValue={currentValue} // Pass the current value
-      />
     </View>
   );
 }
@@ -220,11 +182,12 @@ const styles = StyleSheet.create({
     padding: 5,
     marginVertical: 5,
     borderRadius: 10,
-    width: '95%',
+    width: '90%',
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
+    position: 'relative', // Add this to position the delete button absolutely
   },
   item: {
     backgroundColor: '#555',
@@ -233,13 +196,10 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center', // Center vertically
-    height: 50,
   },
   rowText: {
     color: '#fff',
     fontSize: 16,
-    textAlign: 'center', // Center horizontally
   },
   dot: {
     color: '#fff',
@@ -247,13 +207,16 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   deleteButton: {
+    
     backgroundColor: 'red',
     padding: 5,
-    margin: 2,
-    borderRadius: 5,
-    height: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 10, // Match the row's border radius
+    position: 'absolute',
+    right: 0, // Align it to the right edge
+    top: 0, // Align it to the top edge
+    bottom: 0, // Align it to the bottom edge
+    justifyContent: 'center', // Center the icon vertically
+    alignItems: 'center', // Center the icon horizontally
   },
   deleteButtonText: {
     color: '#fff',

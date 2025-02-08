@@ -2,12 +2,26 @@ import React, { useState, useEffect } from "react";
 import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
 import { setItem, getItem } from "./AsyncStorage";
 import { Link } from 'expo-router';
+import UserData from './UserData'; // Import UserData
+import { StatusBar } from 'expo-status-bar';
 
 export default function Index() {
   const [isDriving, setIsDriving] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [timer, setTimer] = useState(0);
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
+  const [showUserData, setShowUserData] = useState(true);
+
+  useEffect(() => {
+    checkFirstTime();
+  }, []);
+
+  async function checkFirstTime() {
+    const firstTime = await getItem('firstTime');
+    if (firstTime) {
+      setShowUserData(false);
+    }
+  }
 
   useEffect(() => {
     let id: NodeJS.Timeout;
@@ -59,6 +73,12 @@ export default function Index() {
     }
 
     console.log("Drive Data:", await getItem("driveData"));
+  }
+
+  if (showUserData) {
+
+    return <UserData />;
+
   }
 
   return (
