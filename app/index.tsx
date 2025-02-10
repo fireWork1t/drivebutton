@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
-import { setItem, getItem } from "./AsyncStorage";
+import { setItem, getItem, removeItem } from "./AsyncStorage";
 import { Link } from 'expo-router';
 import UserData from './UserData'; // Import UserData
 import { StatusBar } from 'expo-status-bar';
@@ -10,18 +10,27 @@ export default function Index() {
   const [isPaused, setIsPaused] = useState(false);
   const [timer, setTimer] = useState(0);
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
-  const [showUserData, setShowUserData] = useState(true);
+  const [showUserData, setShowUserData] = useState(false);
 
   useEffect(() => {
     checkFirstTime();
   }, []);
 
   async function checkFirstTime() {
-    const firstTime = await getItem('firstTime');
-    if (firstTime) {
-      setShowUserData(false);
+      //removeItem('firstTime');
+      const firstTime = await getItem('firstTime');
+      console.log(await getItem('firstTime'));
+
+      if (!firstTime || firstTime == null) {
+        console.log("First time");
+        setShowUserData(true);
+      } 
+      else {
+        console.log("not first time INDEX");
+        setShowUserData(false);
+        
+      }
     }
-  }
 
   useEffect(() => {
     let id: NodeJS.Timeout;
@@ -85,17 +94,17 @@ export default function Index() {
     <View style={styles.container}>
       {!isDriving ? (
         <TouchableOpacity style={styles.driveButton} onPress={handleDrive}>
-          <Text style={styles.buttonText}>Drive</Text>
+          <Text style={styles.buttonText}>drive</Text>
         </TouchableOpacity>
       ) : (
         <>
           
           <View style={styles.halfCircleContainer}>
             <TouchableOpacity style={[styles.halfCircle, styles.topHalf]} onPress={handlePause}>
-              <Text style={styles.buttonText}>{isPaused ? "Resume" : "Pause"}</Text>
+              <Text style={styles.buttonText}>{isPaused ? "resume" : "pause"}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.halfCircle, styles.bottomHalf]} onPress={handleStop}>
-              <Text style={styles.buttonText}>Stop</Text>
+              <Text style={styles.buttonText}>stop</Text>
             </TouchableOpacity>
           </View>
 
@@ -160,7 +169,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "#fff",
-    fontSize: 24,
+    fontSize: 50,
+    
   },
   text: {
     fontSize: 32,
