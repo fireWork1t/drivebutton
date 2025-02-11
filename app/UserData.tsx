@@ -4,10 +4,13 @@ import { getItem, setItem, removeItem, getAllItems } from './AsyncStorage';
 import {Picker} from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Location from 'expo-location';
-import Index from './index';
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation
+import Animated, { Easing, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { router } from 'expo-router';
 
 
 const UserData = () => {
+  const navigation = useNavigation(); // Initialize navigation
   const [inputValue, setInputValue] = useState('');
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
   const [nameEntered, setNameEntered] = useState(false); // Use state for nameEntered
@@ -33,6 +36,37 @@ const UserData = () => {
     "West Virginia", "Wisconsin", "Wyoming"
   ];
 
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(50);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.exp) });
+    translateY.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.exp) });
+  }, [screen]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacity.value,
+      transform: [{ translateY: translateY.value }],
+    };
+  });
+
+  const buttonScale = useSharedValue(1);
+
+  const animatedButtonStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: buttonScale.value }],
+    };
+  });
+
+  const handleButtonPressIn = () => {
+    buttonScale.value = withTiming(0.95, { duration: 100 });
+  };
+
+  const handleButtonPressOut = () => {
+    buttonScale.value = withTiming(1, { duration: 100 });
+  };
+
   useEffect(() => {
     checkFirstTime();
   }, []);
@@ -56,12 +90,10 @@ const UserData = () => {
   }
 
   function handleContinue() {
-    setScreen('name');
+    setScreenWithAnimation('name');
   }
 
   async function handleNameSave() {
-
-
     if (inputValue.trim() !== '') {
       if (inputValue.trim().split(' ').length == 2) {
         setNameEntered(true); // Update state
@@ -69,7 +101,7 @@ const UserData = () => {
         
         console.log(await getAllItems());
         setInputValue("");
-        setScreen('state');
+        setScreenWithAnimation('state');
         console.log(screen);
         setIsButtonDisabled(true);
       } else {
@@ -99,7 +131,7 @@ const UserData = () => {
         tempData.state = selectedState;
         setItem("userData", tempData);
 
-        setScreen('birthDate');
+        setScreenWithAnimation('birthDate');
       }
       console.log(tempData);
       console.log(await getAllItems());
@@ -134,7 +166,7 @@ const UserData = () => {
         tempData.birthDate = JSON.stringify(tempData.birthDate).substring(1, JSON.stringify(tempData.birthDate).indexOf('T'));
         setItem("userData", tempData);
         setDateEntered(true);
-        setScreen("parentEmail");
+        setScreenWithAnimation("parentEmail");
       }
       console.log(await getItem("userData"));
       
@@ -155,8 +187,6 @@ const UserData = () => {
   }
 
   async function handleParentEmailSave() {
-
-
     if (inputValue.trim() !== '') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       
@@ -172,100 +202,81 @@ const UserData = () => {
         
         console.log(await getAllItems());
         setInputValue("");
-        setScreen('location');
+        setScreenWithAnimation('location');
         //console.log(screen);
         setIsButtonDisabled(true);
       } else {
         setShowEmailError(true);
       }
     }
-
-    
-
 }
 
-
-async function handleParentEmailSkip()
-{
+async function handleParentEmailSkip() {
     const tempData = await getItem("userData");
-    if (tempData)
-    {
+    if (tempData) {
         tempData.parentEmail = "";
         setItem("userData", tempData);
     }
-    
-    
-    
     console.log(await getAllItems());
     setInputValue("");
-    setScreen('location');
-    //console.log(screen);
+    setScreenWithAnimation('location');
     setIsButtonDisabled(true);
 }
-
 
   async function handleBack() {
     console.log(screen);
     if (screen === 'state') {
-      setScreen('name');
+      setScreenWithAnimation('name');
       const value = await getItem("userData");
       if (value) {
-        
         setInputValue(value.name);
       }
       setNameEntered(false);
       setIsButtonDisabled(false);
     }
     if (screen === 'birthDate') {
-        setScreen('state');
+        setScreenWithAnimation('state');
         const value = await getItem("userData");
         if (value) {
-            
             setSelectedState(value.state);
         }
         setStateEntered(false);
         setIsButtonDisabled(false);
-        }
-
+    }
     if (screen === 'parentEmail') {
-        setScreen('birthDate');
+        setScreenWithAnimation('birthDate');
         const value = await getItem("userData");
         if (value) {
             const stringDate = value.birthDate + "T08:00:00.000Z";
             console.log(stringDate);
             const dateObject: Date = new Date(stringDate);
             console.log(dateObject);
-
             setSelectedDate(dateObject);
         }
         setDateEntered(false);
         setIsButtonDisabled(false);
     }
-
     if (screen === 'location') {
-        setScreen('parentEmail');
+        setScreenWithAnimation('parentEmail');
         const value = await getItem("userData");
         if (value) {
             setInputValue(value.parentEmail);
         }
-        
         setIsButtonDisabled(false);
-        }
-
+    }
     if (screen === 'complete') {
-        setScreen('location');
+        setScreenWithAnimation('location');
         setIsButtonDisabled(false);
-        }
-  }
+    }
+}
 
 async function requestLocationPermission() {
-
     if (locationButtonText != 'continue') {
     (await Location.requestForegroundPermissionsAsync()).canAskAgain = true;
     console.log((await Location.requestForegroundPermissionsAsync()).canAskAgain); // Reset location permission status
     const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
-            setScreen('complete');
+            setScreenWithAnimation('complete');
         } 
         else {
             console.log('Location permission not granted');
@@ -273,34 +284,42 @@ async function requestLocationPermission() {
             setLocationText('Location permission not granted.');
         }
     }
-
     else {
-        setScreen('complete');
-
+        setScreenWithAnimation('complete');
     }
 }
 
 async function goHome() {
   await setItem('firstTime', 'false');
-  window.location.reload();
+  router.replace('/log');
+  router.replace('/');
+}
+
+function setScreenWithAnimation(newScreen: string) {
+  opacity.value = 0;
+  translateY.value = 50;
+  setTimeout(() => {
+    setScreen(newScreen);
+    opacity.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.exp) });
+    translateY.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.exp) });
+  }, 500);
 }
 
     if (nameEntered && stateEntered && dateEntered && screen === 'complete') {
         return (
-        <View style={styles.container}>
+        <Animated.View style={[styles.container, animatedStyle]}>
             <Text style={styles.welcome}>congrats</Text>
             <Text style={styles.title}>you're ready to roll.</Text>
 
             <View style={styles.sideBySide}>
-
-        
-
         <TouchableOpacity
         style={styles.backButtonSmall}
         onPress={handleBack}
         disabled={false}
+        onPressIn={handleButtonPressIn}
+        onPressOut={handleButtonPressOut}
         >
-        <Text style={styles.buttonText}>back</Text>
+        <Animated.Text style={[styles.buttonText, animatedButtonStyle]}>back</Animated.Text>
         </TouchableOpacity>
 
         <View style={styles.emptySpaceSmall}></View>
@@ -309,53 +328,49 @@ async function goHome() {
           style={styles.saveButtonSmall}
           onPress={goHome}
           disabled={false}
+          onPressIn={handleButtonPressIn}
+          onPressOut={handleButtonPressOut}
         >
-          <Text style={styles.buttonText}>let's go</Text>
+          <Animated.Text style={[styles.buttonText, animatedButtonStyle]}>let's go</Animated.Text>
         </TouchableOpacity>
 
         <View style={styles.emptySpaceSmall}></View>
         
         </View>
-
-        </View>
+        </Animated.View>
         );
     }
 
-
   if (nameEntered && stateEntered && dateEntered && screen === 'location') {
-
     return (
-      <View style={styles.container}>
+      <Animated.View style={[styles.container, animatedStyle]}>
         <Text style={styles.title}>{locationText}</Text>
         <Text style={styles.title}>{(locationText === "Please enable location services.") ? "Location will be used to determine weather, estimate speed, and visually log drives on a map." : "To update location permissions, go to the Settings app."}</Text>
-        
-        
         <TouchableOpacity
           style={[styles.saveButton]}
           onPress={requestLocationPermission}
           disabled={false}
+          onPressIn={handleButtonPressIn}
+          onPressOut={handleButtonPressOut}
         >
-          <Text style={styles.buttonText}>{locationButtonText}</Text>
+          <Animated.Text style={[styles.buttonText, animatedButtonStyle]}>{locationButtonText}</Animated.Text>
         </TouchableOpacity>
-
-        
-
         <TouchableOpacity
           style={styles.backButton}
           onPress={handleBack}
           disabled={false}
+          onPressIn={handleButtonPressIn}
+          onPressOut={handleButtonPressOut}
         >
-          <Text style={styles.buttonText}>back</Text>
+          <Animated.Text style={[styles.buttonText, animatedButtonStyle]}>back</Animated.Text>
         </TouchableOpacity>
-        
-      </View>
+      </Animated.View>
     );
-
   }
 
   if (nameEntered && stateEntered && dateEntered && screen === 'parentEmail') {
     return (
-      <View style={styles.container}>
+      <Animated.View style={[styles.container, animatedStyle]}>
         <Text style={styles.title}>Please enter a parent's email for optional weekly practice reports.</Text>
         <Text style={styles.error}>{showEmailError ? "Please enter a valid email." : ""}</Text>
         <TextInput
@@ -367,57 +382,46 @@ async function goHome() {
           placeholderTextColor="#888"
           onSubmitEditing={handleParentEmailSave}
         />
-
-        
-
         <TouchableOpacity
           style={[styles.saveButton, isButtonDisabled && styles.disabledButton]}
           onPress={handleParentEmailSave}
           disabled={isButtonDisabled}
+          onPressIn={handleButtonPressIn}
+          onPressOut={handleButtonPressOut}
         >
-            <Text style={styles.buttonText}>save</Text>
+            <Animated.Text style={[styles.buttonText, animatedButtonStyle]}>save</Animated.Text>
         </TouchableOpacity>
-        
-
         <View style={styles.emptySpaceSmall}></View>
-
         <View style={styles.sideBySide}>
-
-        
-
         <TouchableOpacity
         style={styles.backButtonSmall}
         onPress={handleBack}
         disabled={false}
+        onPressIn={handleButtonPressIn}
+        onPressOut={handleButtonPressOut}
         >
-        <Text style={styles.buttonText}>back</Text>
+        <Animated.Text style={[styles.buttonText, animatedButtonStyle]}>back</Animated.Text>
         </TouchableOpacity>
-
         <View style={styles.emptySpaceSmall}></View>
-
         <TouchableOpacity
           style={styles.backButtonSmall}
           onPress={handleParentEmailSkip}
           disabled={false}
+          onPressIn={handleButtonPressIn}
+          onPressOut={handleButtonPressOut}
         >
-          <Text style={styles.buttonText}>skip</Text>
+          <Animated.Text style={[styles.buttonText, animatedButtonStyle]}>skip</Animated.Text>
         </TouchableOpacity>
-
         <View style={styles.emptySpaceSmall}></View>
-        
         </View>
-
-        
-        </View>
+        </Animated.View>
     );
-
   }
 
   if (nameEntered && stateEntered && screen === 'birthDate') {
     return (
-      <View style={styles.container}>
+      <Animated.View style={[styles.container, animatedStyle]}>
         <Text style={styles.title}>Please enter your date of birth.</Text>
-        
         <DateTimePicker
           value={selectedDate}
           mode="date"
@@ -433,40 +437,35 @@ async function goHome() {
             }
           }}
         />
-
         <View style={styles.sideBySide}>
         <TouchableOpacity
           style={styles.backButtonSmall}
           onPress={handleBack}
           disabled={false}
+          onPressIn={handleButtonPressIn}
+          onPressOut={handleButtonPressOut}
         >
-          <Text style={styles.buttonText}>back</Text>
+          <Animated.Text style={[styles.buttonText, animatedButtonStyle]}>back</Animated.Text>
         </TouchableOpacity>
-
         <View style={styles.emptySpaceSmall}></View>
-
         <TouchableOpacity
           style={[styles.saveButtonSmall]}
           onPress={handleBirthdateSave}
           disabled={false}
+          onPressIn={handleButtonPressIn}
+          onPressOut={handleButtonPressOut}
         >
-          <Text style={styles.buttonText}>save</Text>
+          <Animated.Text style={[styles.buttonText, animatedButtonStyle]}>save</Animated.Text>
         </TouchableOpacity>
         </View>
-        
-
-        
-
         <Text style={styles.error}>{showDateError ? "Please enter a valid date." : ""}</Text>
-      </View>
+      </Animated.View>
     );
   }
 
-
-
   if (nameEntered && screen === 'state') {
     return (
-      <View style={styles.container}>
+      <Animated.View style={[styles.container, animatedStyle]}>
         <Text style={styles.title}>Which state do you live in?</Text>
         <Picker
           selectedValue={selectedState}
@@ -482,37 +481,34 @@ async function goHome() {
           ))}
         </Picker>
         <View style={styles.emptySpaceLarge}></View>
-
         <View style={styles.sideBySide}>
         <TouchableOpacity
           style={styles.backButtonSmall}
           onPress={handleBack}
           disabled={false}
+          onPressIn={handleButtonPressIn}
+          onPressOut={handleButtonPressOut}
         >
-          <Text style={styles.buttonText}>back</Text>
+          <Animated.Text style={[styles.buttonText, animatedButtonStyle]}>back</Animated.Text>
         </TouchableOpacity>
-
         <View style={styles.emptySpaceSmall}></View>
-
         <TouchableOpacity
           style={[styles.saveButtonSmall]}
           onPress={handleStateSave}
           disabled={false}
+          onPressIn={handleButtonPressIn}
+          onPressOut={handleButtonPressOut}
         >
-          <Text style={styles.buttonText}>save</Text>
+          <Animated.Text style={[styles.buttonText, animatedButtonStyle]}>save</Animated.Text>
         </TouchableOpacity>
-
-        
-
-        
         </View>
-      </View>
+      </Animated.View>
     );
   }
 
   if (screen === 'name') {
     return (
-      <View style={styles.container}>
+      <Animated.View style={[styles.container, animatedStyle]}>
         <Text style={styles.title}>Please enter your legal name.</Text>
         <TextInput
           style={styles.textInput}
@@ -527,17 +523,19 @@ async function goHome() {
           style={[styles.saveButton, isButtonDisabled && styles.disabledButton]}
           onPress={handleNameSave}
           disabled={isButtonDisabled}
+          onPressIn={handleButtonPressIn}
+          onPressOut={handleButtonPressOut}
         >
-          <Text style={styles.buttonText}>save</Text>
+          <Animated.Text style={[styles.buttonText, animatedButtonStyle]}>save</Animated.Text>
         </TouchableOpacity>
         <Text style={styles.error}>{showNameError ? "Please enter a first and last name." : ""}</Text>
-      </View>
+      </Animated.View>
     );
   }
 
   if (screen === 'welcome') {
     return (
-      <View style={styles.container}>
+      <Animated.View style={[styles.container, animatedStyle]}>
         <Text style={styles.welcome}>welcome</Text>
         <Text style={styles.header}>to set up your requirements,</Text>
         <Text style={styles.header}>we need some quick info.</Text>
@@ -545,10 +543,12 @@ async function goHome() {
           style={styles.saveButton}
           onPress={handleContinue}
           disabled={false}
+          onPressIn={handleButtonPressIn}
+          onPressOut={handleButtonPressOut}
         >
-          <Text style={styles.buttonText}>continue</Text>
+          <Animated.Text style={[styles.buttonText, animatedButtonStyle]}>continue</Animated.Text>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
     );
   }
 };

@@ -17,7 +17,7 @@ export default function Index() {
   }, []);
 
   async function checkFirstTime() {
-      //removeItem('firstTime');
+       removeItem('firstTime');
       const firstTime = await getItem('firstTime');
       console.log(await getItem('firstTime'));
 
