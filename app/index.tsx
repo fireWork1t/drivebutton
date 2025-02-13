@@ -1,36 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
-import { setItem, getItem, removeItem } from "./AsyncStorage";
+import { Text, View, TouchableOpacity } from "react-native";
+import { setItem, getItem } from "./AsyncStorage";
 import { Link } from 'expo-router';
-import UserData from './UserData'; // Import UserData
+import UserData from './UserData';
 import { StatusBar } from 'expo-status-bar';
+import { styles } from './styles'; // Import styles
 
 export default function Index() {
   const [isDriving, setIsDriving] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [timer, setTimer] = useState(0);
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
-  const [showUserData, setShowUserData] = useState(false);
+  const [showUserData, setShowUserData] = useState(true);
 
   useEffect(() => {
     checkFirstTime();
   }, []);
 
   async function checkFirstTime() {
-       removeItem('firstTime');
-      const firstTime = await getItem('firstTime');
-      console.log(await getItem('firstTime'));
-
-      if (!firstTime || firstTime == null) {
-        console.log("First time");
-        setShowUserData(true);
-      } 
-      else {
-        console.log("not first time INDEX");
-        setShowUserData(false);
-        
-      }
+    const firstTime = await getItem('firstTime');
+    if (firstTime) {
+      setShowUserData(false);
     }
+  }
 
   useEffect(() => {
     let id: NodeJS.Timeout;
@@ -128,59 +120,3 @@ export default function Index() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  timerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  driveButton: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: "#007AFF",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  halfCircleContainer: {
-    marginTop: 20,
-  },
-  halfCircle: {
-    width: 200,
-    height: 100,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  topHalf: {
-    borderTopLeftRadius: 100,
-    borderTopRightRadius: 100,
-    backgroundColor: "#FF9500",
-  },
-  bottomHalf: {
-    borderBottomLeftRadius: 100,
-    borderBottomRightRadius: 100,
-    backgroundColor: "#FF3B30",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 50,
-    
-  },
-  text: {
-    fontSize: 32,
-  },
-  biggertext: {
-    fontSize: 45,
-  },
-  linkText: {
-    fontSize: 18,
-    color: "#007AFF",
-    marginTop: 20,
-  },
-});
