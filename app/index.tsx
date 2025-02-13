@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, TouchableOpacity } from "react-native";
+import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
 import { setItem, getItem } from "./AsyncStorage";
 import { Link } from 'expo-router';
-import UserData from './UserData';
+import UserData from './UserData'; // Import UserData
 import { StatusBar } from 'expo-status-bar';
-import { styles } from './styles'; // Import styles
 
 export default function Index() {
   const [isDriving, setIsDriving] = useState(false);
@@ -120,3 +119,59 @@ export default function Index() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  timerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  driveButton: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: "#007AFF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  halfCircleContainer: {
+    marginTop: 20,
+  },
+  halfCircle: {
+    width: 200,
+    height: 100,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  topHalf: {
+    borderTopLeftRadius: 100,
+    borderTopRightRadius: 100,
+    backgroundColor: "#FF9500",
+  },
+  bottomHalf: {
+    borderBottomLeftRadius: 100,
+    borderBottomRightRadius: 100,
+    backgroundColor: "#FF3B30",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 50,
+    
+  },
+  text: {
+    fontSize: 32,
+  },
+  biggertext: {
+    fontSize: 45,
+  },
+  linkText: {
+    fontSize: 18,
+    color: "#007AFF",
+    marginTop: 20,
+  },
+});

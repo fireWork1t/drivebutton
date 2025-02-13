@@ -14,7 +14,7 @@ import Animated, {
     Easing,
   } from 'react-native-reanimated';
 
-function UserData() {
+const UserData = () => {
   const [inputValue, setInputValue] = useState('');
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
   const [nameEntered, setNameEntered] = useState(false); // Use state for nameEntered
@@ -69,7 +69,7 @@ const scaleConfig = {
 
   const width = useWindowDimensions().width;
 
-  function saveButtonAnimation() {
+  const saveButtonAnimation = useAnimatedStyle(() => {
     return {
       transform: [{ scale: withTiming(saveButtonScale.value, scaleConfig, (isFinished) => {
         if (isFinished && isButtonClicked) { // Check if button was clicked
@@ -81,9 +81,9 @@ const scaleConfig = {
         }
       }) }],
     };
-  }
+  });
 
-  function screenAnimation() {
+  const screenAnimation = useAnimatedStyle(() => {
     return {
       opacity: withTiming(screenOpacity.value, opacityConfig),
       transform: [{ scale: withTiming(screenTransform.value, transformConfig, (isFinished) => {
@@ -93,14 +93,14 @@ const scaleConfig = {
         }
       }) }],
     };
-  }
+  });
 
   useEffect(() => {
     checkFirstTime();
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(function() {
+    const interval = setInterval(() => {
       // Code to run continuously
       console.log(screenTransitioned);
 
@@ -115,9 +115,7 @@ const scaleConfig = {
       }
     }, 100); // Run every 100 milliseconds
 
-    return function() {
-      clearInterval(interval); // Cleanup interval on component unmount
-    };
+    return () => clearInterval(interval); // Cleanup interval on component unmount
   }, [screenTransitioned, targetFunction]);
 
   async function checkFirstTime() {
@@ -333,7 +331,7 @@ const scaleConfig = {
 
   if (nameEntered && stateEntered && dateEntered && screen === 'complete') {
     return (
-      <Animated.View style={[styles.container, screenAnimation()]}>
+      <Animated.View style={[styles.container, screenAnimation]}>
         <Text style={styles.welcome}>congrats</Text>
         <Text style={styles.title}>you're ready to roll.</Text>
 
@@ -364,7 +362,7 @@ const scaleConfig = {
 
   if (nameEntered && stateEntered && dateEntered && screen === 'location') {
     return (
-      <Animated.View style={[styles.container, screenAnimation()]}>
+      <Animated.View style={[styles.container, screenAnimation]}>
         <Text style={styles.title}>{locationText}</Text>
         <Text style={styles.title}>{(locationText === "Please enable location services.") ? "Location will be used to determine weather, estimate speed, and visually log drives on a map." : "To update location permissions, go to the Settings app."}</Text>
         
@@ -389,7 +387,7 @@ const scaleConfig = {
 
   if (nameEntered && stateEntered && dateEntered && screen === 'parentEmail') {
     return (
-      <Animated.View style={[styles.container, screenAnimation()]}>
+      <Animated.View style={[styles.container, screenAnimation]}>
         <Text style={styles.title}>Please enter a parent's email for optional weekly practice reports.</Text>
         <Text style={styles.error}>{showEmailError ? "Please enter a valid email." : ""}</Text>
         <TextInput
@@ -439,7 +437,7 @@ const scaleConfig = {
 
   if (nameEntered && stateEntered && screen === 'birthDate') {
     return (
-      <Animated.View style={[styles.container, screenAnimation()]}>
+      <Animated.View style={[styles.container, screenAnimation]}>
         <Text style={styles.title}>Please enter your date of birth.</Text>
         
         <DateTimePicker
@@ -448,7 +446,7 @@ const scaleConfig = {
           display="spinner"
           maximumDate={new Date(new Date().getFullYear() - 13, new Date().getMonth(), new Date().getDate())}
           minimumDate={new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate())}
-          onChange={function(event, date) {
+          onChange={(event, date) => {
             if (date) {
               setSelectedDate(date);
               setIsButtonDisabled(false);
@@ -485,12 +483,12 @@ const scaleConfig = {
 
   if (nameEntered && screen === 'state') {
     return (
-      <Animated.View style={[styles.container, screenAnimation()]}>
+      <Animated.View style={[styles.container, screenAnimation]}>
         <Text style={styles.title}>Which state do you live in?</Text>
         <Picker
           selectedValue={selectedState}
           style={styles.picker}
-          onValueChange={function(itemValue) {
+          onValueChange={(itemValue) => {
             setSelectedState(itemValue);
             setIsButtonDisabled(itemValue.trim() === '');
           }}
@@ -527,7 +525,7 @@ const scaleConfig = {
 
   if (screen === 'name') {
     return (
-      <Animated.View style={[styles.container, screenAnimation()]}>
+      <Animated.View style={[styles.container, screenAnimation]}>
         <Text style={styles.title}>Please enter your legal name.</Text>
         <TextInput
           style={styles.textInput}
@@ -553,11 +551,11 @@ const scaleConfig = {
   if (screen === 'welcome') {
     return (
         
-      <Animated.View style={[styles.container, screenAnimation()]}>
+      <Animated.View style={[styles.container, screenAnimation]}>
         <Text style={styles.welcome}>welcome</Text>
         <Text style={styles.header}>to set up your driving log,</Text>
         <Text style={styles.header}>we need some quick info.</Text>
-        <Animated.View style={[styles.sideBySide, saveButtonAnimation()]}>
+        <Animated.View style={[styles.sideBySide, saveButtonAnimation]}>
         <Pressable
           
           style={styles.saveButton}

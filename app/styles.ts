@@ -1,10 +1,14 @@
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
-    
   container: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+  higherContainer: {
+    flex: 1,
     alignItems: 'center',
     backgroundColor: '#ffffff',
   },
@@ -17,22 +21,18 @@ export const styles = StyleSheet.create({
     color: '#000',
     fontSize: 50,
     textAlign: 'center',
-    
-    
   },
   header: {
     color: '#000',
     fontSize: 24,
     margin: 5,
     textAlign: 'center',
-    
   },
   title: {
     color: '#000',
     fontSize: 24,
     margin: 20,
     textAlign: 'center',
-    
   },
   error: {
     color: 'red',
@@ -48,11 +48,6 @@ export const styles = StyleSheet.create({
     borderRadius: 5,
     width: '80%',
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 32,
-    elevation: 5,
   },
   picker: {
     height: 70,
@@ -66,11 +61,6 @@ export const styles = StyleSheet.create({
     width: '80%',
     alignItems: 'center',
     margin: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 32,
-    elevation: 5,
   },
   saveButtonSmall: {
     backgroundColor: '#007AFF',
@@ -80,11 +70,6 @@ export const styles = StyleSheet.create({
     marginRight: 10,
     width: '37.5%',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 32,
-    elevation: 5,
   },
   backButton: {
     backgroundColor: '#333',
@@ -92,11 +77,6 @@ export const styles = StyleSheet.create({
     borderRadius: 10,
     width: '80%',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 32,
-    elevation: 5,
   },
   backButtonSmall: {
     backgroundColor: '#333',
@@ -106,15 +86,9 @@ export const styles = StyleSheet.create({
     marginRight: 10,
     width: '37.5%',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 32,
-    elevation: 5,
   },
   disabledButton: {
     backgroundColor: '#555',
-    
   },
   buttonText: {
     color: '#fff',
@@ -125,6 +99,10 @@ export const styles = StyleSheet.create({
   },
   emptySpaceLarge: {
     height: 150,
+  },
+  timerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   driveButton: {
     width: 200,
@@ -154,22 +132,12 @@ export const styles = StyleSheet.create({
     borderBottomRightRadius: 100,
     backgroundColor: "#FF3B30",
   },
-  timerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  text: {
-    fontSize: 32,
-    
-  },
   biggertext: {
     fontSize: 45,
-   
   },
   linkText: {
     fontSize: 18,
     color: "#007AFF",
     marginTop: 20,
-    
   },
 });
