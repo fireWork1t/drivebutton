@@ -83,37 +83,53 @@ const scaleConfig = {
     };
   });
 
-  const screenAnimation = useAnimatedStyle(() => {
+let isAnimationFinished = false; // Global variable to track animation status
+
+const screenAnimation = useAnimatedStyle(() => {
+    const opacity = withTiming(screenOpacity.value, opacityConfig);
+    const transform = withTiming(screenTransform.value, transformConfig, (isFinished) => {
+        isAnimationFinished = isFinished ?? false; // Update global variable
+        console.log("set state");
+        console.log(isAnimationFinished);
+        
+        
+    });
+
     return {
-      opacity: withTiming(screenOpacity.value, opacityConfig),
-      transform: [{ scale: withTiming(screenTransform.value, transformConfig, (isFinished) => {
-        if (isFinished && isButtonClicked) {
-          setScreenTransitioned(true);
-          console.log("cfpoipoioidr");
-        }
-      }) }],
+        opacity,
+        transform: [{ scale: transform }],
     };
-  });
+});
 
   useEffect(() => {
     checkFirstTime();
   }, []);
 
+
   useEffect(() => {
     const interval = setInterval(() => {
       // Code to run continuously
-      console.log(screenTransitioned);
+      if (isAnimationFinished) {
 
-      if (screenTransitioned) {
+        //setScreenTransitioned(true);
+        //console.log("cfpoipoioidr");
         console.log("cfoidr");
         // Call the target function
+        isAnimationFinished = false;
         targetFunction();
         setIsButtonClicked(false);
         screenOpacity.value = 1;
         screenTransform.value = 1; 
         setScreenTransitioned(false);
-      }
+        
+    }
+
+      console.log(isAnimationFinished);
+
+      
     }, 100); // Run every 100 milliseconds
+
+
 
     return () => clearInterval(interval); // Cleanup interval on component unmount
   }, [screenTransitioned, targetFunction]);
@@ -536,13 +552,19 @@ const scaleConfig = {
           placeholderTextColor="#888"
           onSubmitEditing={handleNameSave} // Call handleNameSave on Enter key press
         />
-        <Pressable
-          style={[styles.saveButton, isButtonDisabled && styles.disabledButton]}
-          onPress={handleNameSave}
-          disabled={isButtonDisabled}
-        >
-          <Text style={styles.buttonText}>save</Text>
-        </Pressable>
+        <Animated.View style={[styles.sideBySide, saveButtonAnimation]}>
+            <Pressable
+            style={[styles.saveButton, isButtonDisabled && styles.disabledButton]}
+            onPress={() => {
+                setTargetFunction(() => handleNameSave); // Set the target function
+                setIsButtonClicked(true); // Set button clicked state to true
+                saveButtonScale.value = 0.8;
+            }}
+            disabled={isButtonDisabled}
+            >
+            <Text style={styles.buttonText}>save</Text>
+            </Pressable>
+        </Animated.View>
         <Text style={styles.error}>{showNameError ? "Please enter a first and last name." : ""}</Text>
       </Animated.View>
     );
