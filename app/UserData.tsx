@@ -14,6 +14,8 @@ import Animated, {
     Easing,
   } from 'react-native-reanimated';
 
+  
+
 const UserData = () => {
   const [inputValue, setInputValue] = useState('');
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
@@ -21,7 +23,8 @@ const UserData = () => {
   const [stateEntered, setStateEntered] = useState(false);
   const [dateEntered, setDateEntered] = useState(false);
   const [isButtonClicked, setIsButtonClicked] = useState(false); // New state variable
-  const [targetFunction, setTargetFunction] = useState<() => void>(() => {}); // State variable to store target function
+ 
+   // State variable to store target function
   
   const [screen, setScreen] = useState('welcome'); // Use state for screen
   const [showNameError, setShowNameError] = useState(false);
@@ -29,7 +32,7 @@ const UserData = () => {
   const [showEmailError, setShowEmailError] = useState(false);
   const [selectedState, setSelectedState] = useState(''); // Use state for selected state
   const [selectedDate, setSelectedDate] = useState(new Date()); // Use state for selected state
-
+  var [targetFunction, setTargetFunction] = useState<() => void>(() => {});
   const [locationButtonText, setLocationButtonText] = useState('enable location'); // Use state for locationText
   const [locationText, setLocationText] = useState('Please enable location services.'); // Use state for locationText
 
@@ -91,6 +94,7 @@ const screenAnimation = useAnimatedStyle(() => {
         isAnimationFinished = isFinished ?? false; // Update global variable
         console.log("set state");
         console.log(isAnimationFinished);
+        //targetFunction();
         
         
     });
