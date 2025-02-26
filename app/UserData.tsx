@@ -15,6 +15,7 @@ import Animated, {
   } from 'react-native-reanimated';
 
   
+  
 
 const UserData = () => {
   const [inputValue, setInputValue] = useState('');
@@ -32,7 +33,8 @@ const UserData = () => {
   const [showEmailError, setShowEmailError] = useState(false);
   const [selectedState, setSelectedState] = useState(''); // Use state for selected state
   const [selectedDate, setSelectedDate] = useState(new Date()); // Use state for selected state
-  var [targetFunction, setTargetFunction] = useState<() => void>(() => {});
+  const [errorExists, setErrorExists] = useState(false);
+  const [targetFunction, setTargetFunction] = useState<() => Promise<void>>(async () => {});
   const [locationButtonText, setLocationButtonText] = useState('enable location'); // Use state for locationText
   const [locationText, setLocationText] = useState('Please enable location services.'); // Use state for locationText
 
@@ -44,6 +46,8 @@ const UserData = () => {
     "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", 
     "West Virginia", "Wisconsin", "Wyoming"
   ];
+
+  
 
 const saveButtonScale = useSharedValue(1);
 const backButtonScale = useSharedValue(1);
@@ -72,31 +76,65 @@ const scaleConfig = {
 
   const width = useWindowDimensions().width;
 
+  const screenAnimationStarted = useSharedValue(false); // Track if animation has started
+
+  const buttonAnimationStarted = useSharedValue(false); // Track if animation has started
+
   const saveButtonAnimation = useAnimatedStyle(() => {
     return {
       transform: [{ scale: withTiming(saveButtonScale.value, scaleConfig, (isFinished) => {
-        if (isFinished && isButtonClicked) { // Check if button was clicked
+        if (isFinished && isButtonClicked && !errorExists)
+        {
+        
             screenTransform.value = 1.2;
             screenOpacity.value = 0;
-        }
-        if (isFinished) {
-            saveButtonScale.value = 1; // Reset scale to 1 when animation finishes
-        }
+            screenAnimationStarted.value = true;
+            
+        
+  
+      }
+
       }) }],
     };
   });
 
-let isAnimationFinished = false; // Global variable to track animation status
+let isScreenAnimationFinished = false;
 
 const screenAnimation = useAnimatedStyle(() => {
     const opacity = withTiming(screenOpacity.value, opacityConfig);
     const transform = withTiming(screenTransform.value, transformConfig, (isFinished) => {
-        isAnimationFinished = isFinished ?? false; // Update global variable
-        console.log("set state");
-        console.log(isAnimationFinished);
-        //targetFunction();
-        
-        
+        if (isFinished && isButtonClicked && !errorExists) { // Check if animation has started
+            
+            isScreenAnimationFinished = true;
+
+            setErrorExists(false);
+
+            if (screen === "welcome")
+            {
+              handleContinue();
+              saveButtonScale.value = 1;
+              setIsButtonClicked(false);
+            }
+            else if (screen === "name")
+            {
+              setScreen('state');
+              console.log(screen);
+              setIsButtonDisabled(true);
+            }
+            else if (screen === "state")
+              {
+                setScreen('birthDate');
+                console.log(screen);
+                setIsButtonDisabled(true);
+              }
+
+            screenAnimationStarted.value = false;
+
+            setIsButtonClicked(false);
+        screenOpacity.value = 1;
+        screenTransform.value = 1; 
+        setScreenTransitioned(false);
+        }
     });
 
     return {
@@ -105,38 +143,19 @@ const screenAnimation = useAnimatedStyle(() => {
     };
 });
 
+  
+
   useEffect(() => {
     checkFirstTime();
   }, []);
 
+  async function blank() {}
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      // Code to run continuously
-      if (isAnimationFinished) {
+    setTargetFunction(blank); // Set the target function inside useEffect
+  }, []);
 
-        //setScreenTransitioned(true);
-        //console.log("cfpoipoioidr");
-        console.log("cfoidr");
-        // Call the target function
-        isAnimationFinished = false;
-        targetFunction();
-        setIsButtonClicked(false);
-        screenOpacity.value = 1;
-        screenTransform.value = 1; 
-        setScreenTransitioned(false);
-        
-    }
-
-      console.log(isAnimationFinished);
-
-      
-    }, 100); // Run every 100 milliseconds
-
-
-
-    return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, [screenTransitioned, targetFunction]);
+  
 
   async function checkFirstTime() {
     //removeItem('firstTime');
@@ -155,7 +174,7 @@ const screenAnimation = useAnimatedStyle(() => {
     setIsButtonDisabled((text.trim() === '') || (text === null));
   }
 
-  function handleContinue() {
+  async function handleContinue() {
     setScreen('name');
   }
 
@@ -164,13 +183,14 @@ const screenAnimation = useAnimatedStyle(() => {
       if (inputValue.trim().split(' ').length == 2) {
         setNameEntered(true); // Update state
         await setItem('userData', { name: inputValue });
-        
+        setErrorExists(false);
         console.log(await getAllItems());
         setInputValue("");
-        setScreen('state');
-        console.log(screen);
-        setIsButtonDisabled(true);
-      } else {
+        saveButtonScale.value = 0.8; 
+        
+      } 
+      else {
+        setErrorExists(true);
         setShowNameError(true);
       }
     }
@@ -193,12 +213,12 @@ const screenAnimation = useAnimatedStyle(() => {
       if (tempData) {
         tempData.state = selectedState;
         setItem("userData", tempData);
-
-        setScreen('birthDate');
+        
+        
       }
       console.log(tempData);
       console.log(await getAllItems());
-
+      
       setIsButtonDisabled(true);
     }
 
@@ -509,34 +529,40 @@ const screenAnimation = useAnimatedStyle(() => {
           selectedValue={selectedState}
           style={styles.picker}
           onValueChange={(itemValue) => {
-            setSelectedState(itemValue);
-            setIsButtonDisabled(itemValue.trim() === '');
+        setSelectedState(itemValue);
+        setIsButtonDisabled(itemValue.trim() === '');
           }}
         >
           <Picker.Item label="Select your state" value="" />
           {states.map((state) => (
-            <Picker.Item key={state} label={state} value={state} />
+        <Picker.Item key={state} label={state} value={state} />
           ))}
         </Picker>
         <View style={styles.emptySpaceLarge}></View>
 
         <View style={styles.sideBySide}>
           <Pressable
-            style={styles.backButtonSmall}
-            onPress={handleBack}
-            disabled={false}
+        style={styles.backButtonSmall}
+        onPress={handleBack}
+        disabled={false}
           >
-            <Text style={styles.buttonText}>back</Text>
+        <Text style={styles.buttonText}>back</Text>
           </Pressable>
 
           <View style={styles.emptySpaceSmall}></View>
 
           <Pressable
-            style={[styles.saveButtonSmall]}
-            onPress={handleStateSave}
-            disabled={false}
+        style={[styles.saveButtonSmall, isButtonDisabled && styles.disabledButton, saveButtonAnimation]}
+        onPress={() => {
+          saveButtonScale.value = 0.8;
+          setIsButtonClicked(true); // Set button clicked state to true
+          handleStateSave(); // Set the target function
+          
+          
+          }}
+        disabled={isButtonDisabled}
           >
-            <Text style={styles.buttonText}>save</Text>
+        <Text style={styles.buttonText}>save</Text>
           </Pressable>
         </View>
       </Animated.View>
@@ -560,9 +586,9 @@ const screenAnimation = useAnimatedStyle(() => {
             <Pressable
             style={[styles.saveButton, isButtonDisabled && styles.disabledButton]}
             onPress={() => {
-                setTargetFunction(() => handleNameSave); // Set the target function
+                handleNameSave(); // Set the target function
                 setIsButtonClicked(true); // Set button clicked state to true
-                saveButtonScale.value = 0.8;
+                
             }}
             disabled={isButtonDisabled}
             >

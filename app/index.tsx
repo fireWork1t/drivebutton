@@ -5,6 +5,8 @@ import { Link } from 'expo-router';
 import UserData from './UserData'; // Import UserData
 import { StatusBar } from 'expo-status-bar';
 
+
+
 export default function Index() {
   const [isDriving, setIsDriving] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -22,6 +24,9 @@ export default function Index() {
       setShowUserData(false);
     }
   }
+
+ 
+
 
   useEffect(() => {
     let id: NodeJS.Timeout;
