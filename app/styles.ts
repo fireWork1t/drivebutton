@@ -17,6 +17,12 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
   },
+  sideBySideAnimating: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    width: '100%',
+    position: 'relative',
+  },
   welcome: {
     color: '#000',
     fontSize: 50,
@@ -70,6 +76,7 @@ export const styles = StyleSheet.create({
     marginRight: 10,
     width: '37.5%',
     alignItems: 'center',
+    position: 'relative',
   },
   backButton: {
     backgroundColor: '#333',
@@ -86,6 +93,7 @@ export const styles = StyleSheet.create({
     marginRight: 10,
     width: '37.5%',
     alignItems: 'center',
+    position: 'relative',
   },
   disabledButton: {
     backgroundColor: '#555',

@@ -12,6 +12,7 @@ import Animated, {
     withTiming,
     useAnimatedStyle,
     Easing,
+    runOnJS,
   } from 'react-native-reanimated';
 
   
@@ -24,6 +25,7 @@ const UserData = () => {
   const [stateEntered, setStateEntered] = useState(false);
   const [dateEntered, setDateEntered] = useState(false);
   const [isButtonClicked, setIsButtonClicked] = useState(false); // New state variable
+  const [isAnimating, setIsAnimating] = useState(false);
  
    // State variable to store target function
   
@@ -89,8 +91,8 @@ const scaleConfig = {
             screenTransform.value = 1.2;
             screenOpacity.value = 0;
             screenAnimationStarted.value = true;
+            saveButtonScale.value = 1;
             
-        
   
       }
 
@@ -100,40 +102,47 @@ const scaleConfig = {
 
 let isScreenAnimationFinished = false;
 
+const animationFinished = useSharedValue(false);
+
+const handleAnimationEnd = () => {
+  setErrorExists(false);
+
+  if (screen === "welcome") {
+      handleContinue();
+      saveButtonScale.value = 1;
+      setIsButtonClicked(false);
+  } else if (screen === "name") {
+      saveButtonScale.value = 1;
+      setScreen('state');
+      console.log(screen);
+      setIsButtonClicked(false);
+  } else if (screen === "state") {
+      saveButtonScale.value = 1;
+      setScreen('birthDate');
+      console.log(screen);
+      setIsButtonClicked(false);
+  } else if (screen === "birthDate") {
+      saveButtonScale.value = 1;
+      setScreen('parentEmail');
+      console.log(screen);
+      setIsButtonClicked(false);
+  }
+
+  setScreenTransitioned(false);
+  animationFinished.value = false; // Reset the shared value
+};
+
 const screenAnimation = useAnimatedStyle(() => {
     const opacity = withTiming(screenOpacity.value, opacityConfig);
     const transform = withTiming(screenTransform.value, transformConfig, (isFinished) => {
-        if (isFinished && isButtonClicked && !errorExists) { // Check if animation has started
-            
-            isScreenAnimationFinished = true;
-
-            setErrorExists(false);
-
-            if (screen === "welcome")
-            {
-              handleContinue();
-              saveButtonScale.value = 1;
-              setIsButtonClicked(false);
+        if (isFinished && isButtonClicked && !errorExists) {
+            if (!animationFinished.value) {
+                animationFinished.value = true;
+                runOnJS(handleAnimationEnd)();
             }
-            else if (screen === "name")
-            {
-              setScreen('state');
-              console.log(screen);
-              setIsButtonDisabled(true);
-            }
-            else if (screen === "state")
-              {
-                setScreen('birthDate');
-                console.log(screen);
-                setIsButtonDisabled(true);
-              }
-
             screenAnimationStarted.value = false;
-
-            setIsButtonClicked(false);
-        screenOpacity.value = 1;
-        screenTransform.value = 1; 
-        setScreenTransitioned(false);
+            screenOpacity.value = 1;
+            screenTransform.value = 1;
         }
     });
 
@@ -142,6 +151,7 @@ const screenAnimation = useAnimatedStyle(() => {
         transform: [{ scale: transform }],
     };
 });
+
 
   
 
@@ -247,7 +257,7 @@ const screenAnimation = useAnimatedStyle(() => {
         tempData.birthDate = JSON.stringify(tempData.birthDate).substring(1, JSON.stringify(tempData.birthDate).indexOf('T'));
         setItem("userData", tempData);
         setDateEntered(true);
-        setScreen("parentEmail");
+        //setScreen("parentEmail");
       }
       console.log(await getItem("userData"));
     }
@@ -507,13 +517,19 @@ const screenAnimation = useAnimatedStyle(() => {
 
           <View style={styles.emptySpaceSmall}></View>
 
-          <Pressable
-            style={[styles.saveButtonSmall]}
-            onPress={handleBirthdateSave}
-            disabled={false}
-          >
-            <Text style={styles.buttonText}>save</Text>
-          </Pressable>
+          <Animated.View style={[styles.saveButtonSmall, isButtonDisabled && styles.disabledButton, saveButtonAnimation]}>
+            <Pressable
+              onPress={() => {
+                saveButtonScale.value = 0.8;
+                setIsButtonClicked(true);
+                setIsAnimating(true);
+                handleBirthdateSave();
+              }}
+              disabled={isButtonDisabled}
+            >
+              <Text style={styles.buttonText}>save</Text>
+            </Pressable>
+          </Animated.View>
         </View>
 
         <Text style={styles.error}>{showDateError ? "Please enter a valid date." : ""}</Text>
@@ -540,7 +556,7 @@ const screenAnimation = useAnimatedStyle(() => {
         </Picker>
         <View style={styles.emptySpaceLarge}></View>
 
-        <View style={styles.sideBySide}>
+        <View style={isAnimating ? styles.sideBySideAnimating : styles.sideBySide}>
           <Pressable
         style={styles.backButtonSmall}
         onPress={handleBack}
@@ -551,19 +567,19 @@ const screenAnimation = useAnimatedStyle(() => {
 
           <View style={styles.emptySpaceSmall}></View>
 
-          <Pressable
-        style={[styles.saveButtonSmall, isButtonDisabled && styles.disabledButton, saveButtonAnimation]}
-        onPress={() => {
-          saveButtonScale.value = 0.8;
-          setIsButtonClicked(true); // Set button clicked state to true
-          handleStateSave(); // Set the target function
-          
-          
-          }}
-        disabled={isButtonDisabled}
-          >
-        <Text style={styles.buttonText}>save</Text>
-          </Pressable>
+          <Animated.View style={[styles.saveButtonSmall, isButtonDisabled && styles.disabledButton, saveButtonAnimation]}>
+            <Pressable
+              onPress={() => {
+                saveButtonScale.value = 0.8;
+                setIsButtonClicked(true);
+                setIsAnimating(true);
+                handleStateSave();
+              }}
+              disabled={isButtonDisabled}
+            >
+              <Text style={styles.buttonText}>save</Text>
+            </Pressable>
+          </Animated.View>
         </View>
       </Animated.View>
     );
@@ -580,14 +596,15 @@ const screenAnimation = useAnimatedStyle(() => {
           onChangeText={handleInputChange}
           placeholder="First Last"
           placeholderTextColor="#888"
-          onSubmitEditing={handleNameSave} // Call handleNameSave on Enter key press
+          onSubmitEditing={handleNameSave} 
         />
         <Animated.View style={[styles.sideBySide, saveButtonAnimation]}>
             <Pressable
             style={[styles.saveButton, isButtonDisabled && styles.disabledButton]}
             onPress={() => {
-                handleNameSave(); // Set the target function
-                setIsButtonClicked(true); // Set button clicked state to true
+                handleNameSave(); // button scale value change is handled in handleNameSave because it needs to check if there's an error
+                setIsButtonClicked(true); 
+                
                 
             }}
             disabled={isButtonDisabled}
@@ -612,8 +629,8 @@ const screenAnimation = useAnimatedStyle(() => {
           
           style={styles.saveButton}
           onPress={() => {
-            setTargetFunction(() => handleContinue); // Set the target function
-            setIsButtonClicked(true); // Set button clicked state to true
+             
+            setIsButtonClicked(true); 
             saveButtonScale.value = 0.8;
           }}
           disabled={false}

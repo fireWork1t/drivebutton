@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
-import { setItem, getItem } from "./AsyncStorage";
+import { setItem, getItem, clear } from "./AsyncStorage";
 import { Link } from 'expo-router';
 import UserData from './UserData'; // Import UserData
 import { StatusBar } from 'expo-status-bar';
@@ -79,6 +79,8 @@ export default function Index() {
 
     console.log("Drive Data:", await getItem("driveData"));
   }
+
+  clear();
 
   if (showUserData) {
 
