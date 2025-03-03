@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, Pressable, Keyboard, Dimensions, useWindowDimensions } from 'react-native';
+import { View, Text, TextInput, Pressable, Keyboard, Dimensions, useWindowDimensions, Platform } from 'react-native';
 import { getItem, setItem, removeItem, getAllItems } from './AsyncStorage';
 import {Picker} from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Location from 'expo-location';
 import Index from './index';
 import { styles } from './styles'; // Import styles
+import * as Progress from 'react-native-progress';
 
 import Animated, {
     useSharedValue,
@@ -33,13 +34,14 @@ const UserData = () => {
   const [showNameError, setShowNameError] = useState(false);
   const [showDateError, setShowDateError] = useState(false);
   const [showEmailError, setShowEmailError] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(true);
   const [selectedState, setSelectedState] = useState(''); // Use state for selected state
   const [selectedDate, setSelectedDate] = useState(new Date()); // Use state for selected state
   const [errorExists, setErrorExists] = useState(false);
   const [targetFunction, setTargetFunction] = useState<() => Promise<void>>(async () => {});
   const [locationButtonText, setLocationButtonText] = useState('enable location'); // Use state for locationText
   const [locationText, setLocationText] = useState('Please enable location services.'); // Use state for locationText
-
+  const [hasVisitedBirthdate, setHasVisitedBirthdate] = useState(false);
   const states = [
     "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", 
     "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", 
@@ -104,53 +106,85 @@ let isScreenAnimationFinished = false;
 
 const animationFinished = useSharedValue(false);
 
-const handleAnimationEnd = () => {
+function handleAnimationEnd() 
+{
   setErrorExists(false);
 
-  if (screen === "welcome") {
+  if (screen === "welcome")
+  {
       handleContinue();
       saveButtonScale.value = 1;
       setIsButtonClicked(false);
-  } else if (screen === "name") {
+  } 
+  else if (screen === "name") 
+  {
       saveButtonScale.value = 1;
       setScreen('state');
-      console.log(screen);
+      //console.log(screen);
       setIsButtonClicked(false);
-  } else if (screen === "state") {
+  } 
+  else if (screen === "state") 
+  {
       saveButtonScale.value = 1;
       setScreen('birthDate');
-      console.log(screen);
+      //console.log("set to birthdate");
       setIsButtonClicked(false);
-  } else if (screen === "birthDate") {
+  } 
+  else if (screen === "birthDate") 
+  {
       saveButtonScale.value = 1;
       setScreen('parentEmail');
-      console.log(screen);
+      //console.log(screen);
       setIsButtonClicked(false);
   }
+  else if (screen === "parentEmail") 
+    {
+        saveButtonScale.value = 1;
+        setScreen('location');
+        //console.log(screen);
+        setIsButtonClicked(false);
+    }
+
 
   setScreenTransitioned(false);
-  animationFinished.value = false; // Reset the shared value
-};
+  animationFinished.value = false;
+}
 
-const screenAnimation = useAnimatedStyle(() => {
+const screenAnimation = useAnimatedStyle(
+
+  function() {
+
     const opacity = withTiming(screenOpacity.value, opacityConfig);
-    const transform = withTiming(screenTransform.value, transformConfig, (isFinished) => {
-        if (isFinished && isButtonClicked && !errorExists) {
-            if (!animationFinished.value) {
+
+
+    const transform = withTiming(screenTransform.value, transformConfig, 
+
+      function(isFinished) 
+      {
+        if (isFinished && isButtonClicked && !errorExists) 
+        {
+            if (!animationFinished.value) 
+            {
                 animationFinished.value = true;
                 runOnJS(handleAnimationEnd)();
             }
+            
             screenAnimationStarted.value = false;
             screenOpacity.value = 1;
             screenTransform.value = 1;
         }
-    });
+    }
+
+  );
+
 
     return {
         opacity,
         transform: [{ scale: transform }],
     };
-});
+}
+
+);
 
 
   
@@ -229,7 +263,7 @@ const screenAnimation = useAnimatedStyle(() => {
       console.log(tempData);
       console.log(await getAllItems());
       
-      setIsButtonDisabled(true);
+      
     }
 
     const checkData = await getItem('userData');
@@ -277,6 +311,9 @@ const screenAnimation = useAnimatedStyle(() => {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       
       if (emailRegex.test(inputValue)) {
+
+        setErrorExists(false);
+
         const tempData = await getItem("userData");
         if (tempData) {
             tempData.parentEmail = inputValue;
@@ -286,10 +323,13 @@ const screenAnimation = useAnimatedStyle(() => {
         
         console.log(await getAllItems());
         setInputValue("");
-        setScreen('location');
-        setIsButtonDisabled(true);
+        
+        
+        saveButtonScale.value = 0.8; 
+
       } else {
         setShowEmailError(true);
+        setErrorExists(true);
       }
     }
   }
@@ -341,6 +381,7 @@ const screenAnimation = useAnimatedStyle(() => {
         }
         setDateEntered(false);
         setIsButtonDisabled(false);
+        setShowDatePicker(true);  
     }
 
     if (screen === 'location') {
@@ -378,6 +419,35 @@ const screenAnimation = useAnimatedStyle(() => {
   async function goHome() {
     await setItem('firstTime', 'false');
   }
+
+
+
+  const handleDateChange = (event: any, date?: Date) => {
+      if (date) {
+          setSelectedDate(date);
+          setIsButtonDisabled(false);
+      } else {
+          setIsButtonDisabled(true);
+      }
+      if (Platform.OS === 'android') {
+          setShowDatePicker(false); // Hide the picker after selecting a date on Android
+      }
+  };
+
+useEffect(() => {
+  if (screen === 'birthDate') {
+    
+    if (hasVisitedBirthdate == false) {
+      
+      setShowDatePicker(true);
+    
+    }
+    setHasVisitedBirthdate(true);
+  }
+  
+}, [screen]);
+
+const dateTimePickerHeight = 216; // Approximate height of the DateTimePicker
 
   if (nameEntered && stateEntered && dateEntered && screen === 'complete') {
     return (
@@ -449,14 +519,18 @@ const screenAnimation = useAnimatedStyle(() => {
           placeholderTextColor="#888"
           onSubmitEditing={handleParentEmailSave}
         />
-
+         <Animated.View style={[styles.sideBySide, saveButtonAnimation]}>
         <Pressable
-          style={[styles.saveButton, isButtonDisabled && styles.disabledButton]}
-          onPress={handleParentEmailSave}
+          style={[styles.saveButton, isButtonDisabled && styles.disabledButton, saveButtonAnimation]}
+          onPress={ () => {
+            handleParentEmailSave();
+            setIsButtonClicked(true); 
+          }}
           disabled={isButtonDisabled}
         >
           <Text style={styles.buttonText}>save</Text>
         </Pressable>
+        </Animated.View>
 
         <View style={styles.emptySpaceSmall}></View>
 
@@ -486,25 +560,32 @@ const screenAnimation = useAnimatedStyle(() => {
   }
 
   if (nameEntered && stateEntered && screen === 'birthDate') {
+    
     return (
       <Animated.View style={[styles.container, screenAnimation]}>
         <Text style={styles.title}>Please enter your date of birth.</Text>
         
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          display="spinner"
-          maximumDate={new Date(new Date().getFullYear() - 13, new Date().getMonth(), new Date().getDate())}
-          minimumDate={new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate())}
-          onChange={(event, date) => {
-            if (date) {
-              setSelectedDate(date);
-              setIsButtonDisabled(false);
-            } else {
-              setIsButtonDisabled(true);
-            }
-          }}
-        />
+        {Platform.OS === 'android' && (
+          <Pressable onPress={() => setShowDatePicker(true)}>
+            <Text style={styles.dateTextInput}>{selectedDate.toLocaleDateString()}</Text>
+          </Pressable>
+        )}
+
+          
+        {showDatePicker && (
+          <DateTimePicker
+            value={selectedDate}
+            mode="date"
+            display="spinner"
+            maximumDate={new Date(new Date().getFullYear() - 13, new Date().getMonth(), new Date().getDate())}
+            minimumDate={new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate())}
+            onChange={handleDateChange}
+          />
+        )}
+
+        {!showDatePicker && Platform.OS === 'ios' && (
+          <View style={{ height: dateTimePickerHeight }} />
+        )}
 
         <View style={styles.sideBySide}>
           <Pressable
@@ -523,11 +604,14 @@ const screenAnimation = useAnimatedStyle(() => {
                 saveButtonScale.value = 0.8;
                 setIsButtonClicked(true);
                 setIsAnimating(true);
+                setShowDatePicker(false); // Hide the picker before saving
                 handleBirthdateSave();
               }}
               disabled={isButtonDisabled}
             >
-              <Text style={styles.buttonText}>save</Text>
+             
+                <Text style={styles.buttonText}>save</Text>
+              
             </Pressable>
           </Animated.View>
         </View>
@@ -539,7 +623,11 @@ const screenAnimation = useAnimatedStyle(() => {
 
   if (nameEntered && screen === 'state') {
     return (
+      <>
+      
       <Animated.View style={[styles.container, screenAnimation]}>
+      <Progress.Bar progress={0.4} width={300} height={20} animated={true} animationType='spring' />
+      <View style={styles.emptySpaceMedium}></View>
         <Text style={styles.title}>Which state do you live in?</Text>
         <Picker
           selectedValue={selectedState}
@@ -557,6 +645,8 @@ const screenAnimation = useAnimatedStyle(() => {
         <View style={styles.emptySpaceLarge}></View>
 
         <View style={isAnimating ? styles.sideBySideAnimating : styles.sideBySide}>
+
+
           <Pressable
         style={styles.backButtonSmall}
         onPress={handleBack}
@@ -565,10 +655,13 @@ const screenAnimation = useAnimatedStyle(() => {
         <Text style={styles.buttonText}>back</Text>
           </Pressable>
 
+
           <View style={styles.emptySpaceSmall}></View>
+
 
           <Animated.View style={[styles.saveButtonSmall, isButtonDisabled && styles.disabledButton, saveButtonAnimation]}>
             <Pressable
+              
               onPress={() => {
                 saveButtonScale.value = 0.8;
                 setIsButtonClicked(true);
@@ -580,14 +673,21 @@ const screenAnimation = useAnimatedStyle(() => {
               <Text style={styles.buttonText}>save</Text>
             </Pressable>
           </Animated.View>
+
+
         </View>
       </Animated.View>
+      </>
     );
   }
 
   if (screen === 'name') {
     return (
+      <>
+      
       <Animated.View style={[styles.container, screenAnimation]}>
+      <Progress.Bar progress={0.2} width={300} height={20} animated={true} animationType='spring'  />
+      <View style={styles.emptySpaceMedium}></View>
         <Text style={styles.title}>Please enter your legal name.</Text>
         <TextInput
           style={styles.textInput}
@@ -614,13 +714,17 @@ const screenAnimation = useAnimatedStyle(() => {
         </Animated.View>
         <Text style={styles.error}>{showNameError ? "Please enter a first and last name." : ""}</Text>
       </Animated.View>
+      </>
     );
   }
 
   if (screen === 'welcome') {
     return (
-        
+      
+      
+      
       <Animated.View style={[styles.container, screenAnimation]}>
+        
         <Text style={styles.welcome}>welcome</Text>
         <Text style={styles.header}>to set up your driving log,</Text>
         <Text style={styles.header}>we need some quick info.</Text>
@@ -639,6 +743,7 @@ const screenAnimation = useAnimatedStyle(() => {
         </Pressable>
         </Animated.View>
       </Animated.View>
+      
       
     );
   }

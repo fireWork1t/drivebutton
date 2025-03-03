@@ -55,6 +55,16 @@ export const styles = StyleSheet.create({
     width: '80%',
     marginBottom: 20,
   },
+  dateTextInput: {
+    backgroundColor: '#555',
+    fontSize: 20,
+    color: '#fff',
+    padding: 10,
+    height: 45,
+    borderRadius: 5,
+    width: '80%',
+    marginBottom: 20,
+  },
   picker: {
     height: 70,
     width: '80%',
@@ -76,6 +86,7 @@ export const styles = StyleSheet.create({
     marginRight: 10,
     width: '37.5%',
     alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
   },
   backButton: {
@@ -93,6 +104,7 @@ export const styles = StyleSheet.create({
     marginRight: 10,
     width: '37.5%',
     alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
   },
   disabledButton: {
@@ -104,6 +116,9 @@ export const styles = StyleSheet.create({
   },
   emptySpaceSmall: {
     height: 20,
+  },
+  emptySpaceMedium: {
+    height: 100,
   },
   emptySpaceLarge: {
     height: 150,
@@ -147,5 +162,9 @@ export const styles = StyleSheet.create({
     fontSize: 18,
     color: "#007AFF",
     marginTop: 20,
+  },
+  progressBar: {
+    margin: 'auto',
+    
   },
 });
