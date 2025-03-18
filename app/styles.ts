@@ -164,7 +164,16 @@ export const styles = StyleSheet.create({
     marginTop: 20,
   },
   progressBar: {
+    
     margin: 'auto',
     
   },
+
+  
+  
+    
+    text: {
+      fontSize: 32,
+    },
+    
 });

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, Pressable, Keyboard, Dimensions, useWindowDimensions, Platform } from 'react-native';
-import { getItem, setItem, removeItem, getAllItems } from './AsyncStorage';
+import { getItem, setItem, removeItem, getAllItems, clear } from './AsyncStorage';
 import {Picker} from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Location from 'expo-location';
 import Index from './index';
 import { styles } from './styles'; // Import styles
 import * as Progress from 'react-native-progress';
+import reqs from '../reqs.json';
 
 import Animated, {
     useSharedValue,
@@ -16,10 +17,11 @@ import Animated, {
     runOnJS,
   } from 'react-native-reanimated';
 
-  
+  clear();
   
 
-const UserData = () => {
+const UserData = ({ onComplete }: { onComplete: () => void }) => {
+  
   const [inputValue, setInputValue] = useState('');
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
   const [nameEntered, setNameEntered] = useState(false); // Use state for nameEntered
@@ -34,7 +36,7 @@ const UserData = () => {
   const [showNameError, setShowNameError] = useState(false);
   const [showDateError, setShowDateError] = useState(false);
   const [showEmailError, setShowEmailError] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(true);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedState, setSelectedState] = useState(''); // Use state for selected state
   const [selectedDate, setSelectedDate] = useState(new Date()); // Use state for selected state
   const [errorExists, setErrorExists] = useState(false);
@@ -51,7 +53,7 @@ const UserData = () => {
     "West Virginia", "Wisconsin", "Wyoming"
   ];
 
-  
+
 
 const saveButtonScale = useSharedValue(1);
 const backButtonScale = useSharedValue(1);
@@ -122,13 +124,19 @@ function handleAnimationEnd()
       setScreen('state');
       //console.log(screen);
       setIsButtonClicked(false);
+      setInputValue("");
   } 
   else if (screen === "state") 
   {
+    if (Platform.OS === 'ios')
+      {
+        setShowDatePicker(true);
+      }
       saveButtonScale.value = 1;
       setScreen('birthDate');
       //console.log("set to birthdate");
       setIsButtonClicked(false);
+      
   } 
   else if (screen === "birthDate") 
   {
@@ -136,6 +144,7 @@ function handleAnimationEnd()
       setScreen('parentEmail');
       //console.log(screen);
       setIsButtonClicked(false);
+      
   }
   else if (screen === "parentEmail") 
     {
@@ -143,8 +152,20 @@ function handleAnimationEnd()
         setScreen('location');
         //console.log(screen);
         setIsButtonClicked(false);
+        setInputValue("");
     }
+  else if (screen === "location")
+  {
+    saveButtonScale.value = 1;
+    setScreen('complete');
+    setIsButtonClicked(false);
+  
+  }
+  else if (screen === "complete")
 
+    {
+      goHome();
+    }
 
   setScreenTransitioned(false);
   animationFinished.value = false;
@@ -186,6 +207,31 @@ const screenAnimation = useAnimatedStyle(
 
 );
 
+const backButtonAnimation = useSharedValue(0);
+
+const backScreenAnimation = useAnimatedStyle(() => {
+  return {
+    transform: [{ translateX: withTiming(backButtonAnimation.value, transformConfig, (isFinished) => {
+      if (isFinished) {
+        backButtonAnimation.value = 0; // Reset to original position
+      }
+    }) }],
+    opacity: withTiming(screenOpacity.value, opacityConfig),
+  };
+});
+
+
+
+const handleBackPress = () => {
+  backButtonAnimation.value = width; // Slide the screen to the right
+  screenOpacity.value = 0; // Set opacity to 0
+  setTimeout(() => {
+    runOnJS(handleBack)(); // Call handleBack
+    //backButtonAnimation.value = 0; // Return the screen to the original position
+    screenOpacity.value = 1; // Fade in
+  }, transformConfig.duration);
+};
+
 
   
 
@@ -214,12 +260,28 @@ const screenAnimation = useAnimatedStyle(
   }
 
   function handleInputChange(text: string) {
-    setInputValue(text);
-    setIsButtonDisabled((text.trim() === '') || (text === null));
+    if (screen === 'name') 
+      {
+
+      
+        setInputValue(text);
+        setIsButtonDisabled((text.trim() === '') || (text === null));
+      }
+      else
+      {
+        setInputValue(text);
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (emailRegex.test(text)) {
+          setIsButtonDisabled(false);
+        } else {
+          setIsButtonDisabled(true);
+        }
+      }
   }
 
   async function handleContinue() {
     setScreen('name');
+    setIsButtonDisabled(true);
   }
 
   async function handleNameSave() {
@@ -229,7 +291,7 @@ const screenAnimation = useAnimatedStyle(
         await setItem('userData', { name: inputValue });
         setErrorExists(false);
         console.log(await getAllItems());
-        setInputValue("");
+        //setInputValue("");
         saveButtonScale.value = 0.8; 
         
       } 
@@ -247,6 +309,10 @@ const screenAnimation = useAnimatedStyle(
             setStateEntered(true);
             setIsButtonDisabled(false);
         }
+        else
+        {
+            setIsButtonDisabled(true);
+        }
     }
   }
 
@@ -256,6 +322,17 @@ const screenAnimation = useAnimatedStyle(
       const tempData = await getItem("userData");
       if (tempData) {
         tempData.state = selectedState;
+
+        for (const state of reqs.states)
+        {
+            if (state.state = selectedState)
+            {
+               tempData.reqs = {"total": state.total_hours, "night": state.night_hours};
+            }
+        }
+
+        
+
         setItem("userData", tempData);
         
         
@@ -278,6 +355,10 @@ const screenAnimation = useAnimatedStyle(
             setSelectedDate(dateObject);
             setIsButtonDisabled(false);
         }
+        else
+        {
+            setIsButtonDisabled(true);
+        }
     }
   }
 
@@ -285,13 +366,9 @@ const screenAnimation = useAnimatedStyle(
     if (selectedDate !== null) {
       const tempData = await getItem("userData");
       if (tempData) {
-        tempData.birthDate = selectedDate;
-        console.log(selectedDate);
-        console.log(JSON.stringify(tempData.birthDate));
-        tempData.birthDate = JSON.stringify(tempData.birthDate).substring(1, JSON.stringify(tempData.birthDate).indexOf('T'));
+        tempData.birthDate = selectedDate.toISOString().split('T')[0];
         setItem("userData", tempData);
         setDateEntered(true);
-        //setScreen("parentEmail");
       }
       console.log(await getItem("userData"));
     }
@@ -299,10 +376,12 @@ const screenAnimation = useAnimatedStyle(
     const checkData = await getItem('userData');
 
     if (checkData) {
-        if (checkData.parentEmail) {
-            setInputValue(checkData.parentEmail);
-            setIsButtonDisabled(false);
-        }
+      if (checkData.parentEmail) {
+        setInputValue(checkData.parentEmail);
+        setIsButtonDisabled(false);
+      } else {
+        setIsButtonDisabled(true);
+      }
     }
   }
 
@@ -322,7 +401,7 @@ const screenAnimation = useAnimatedStyle(
         setNameEntered(true); // Update state
         
         console.log(await getAllItems());
-        setInputValue("");
+        //setInputValue("");
         
         
         saveButtonScale.value = 0.8; 
@@ -342,7 +421,7 @@ const screenAnimation = useAnimatedStyle(
     }
     
     console.log(await getAllItems());
-    setInputValue("");
+    //setInputValue("");
     setScreen('location');
     setIsButtonDisabled(true);
   }
@@ -369,6 +448,10 @@ const screenAnimation = useAnimatedStyle(
     }
 
     if (screen === 'parentEmail') {
+      if (Platform.OS === 'ios')
+        {
+          setShowDatePicker(true);  
+        }
         setScreen('birthDate');
         const value = await getItem("userData");
         if (value) {
@@ -381,7 +464,7 @@ const screenAnimation = useAnimatedStyle(
         }
         setDateEntered(false);
         setIsButtonDisabled(false);
-        setShowDatePicker(true);  
+        
     }
 
     if (screen === 'location') {
@@ -405,19 +488,28 @@ const screenAnimation = useAnimatedStyle(
       console.log((await Location.requestForegroundPermissionsAsync()).canAskAgain); // Reset location permission status
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
-          setScreen('complete');
+        saveButtonScale.value = 0.8;
+      setIsButtonClicked(true);
+      setIsAnimating(true);
+          //setScreen('complete');
       } else {
           console.log('Location permission not granted');
           setLocationButtonText('continue');
           setLocationText('Location permission not granted.');
       }
     } else {
-        setScreen('complete');
+      saveButtonScale.value = 0.8;
+      setIsButtonClicked(true);
+      setIsAnimating(true);
+      //setScreen('complete');
+        
     }
   }
 
   async function goHome() {
+    console.log("going home");
     await setItem('firstTime', 'false');
+    onComplete(); // Call the prop function to update the state in the Index component
   }
 
 
@@ -426,7 +518,8 @@ const screenAnimation = useAnimatedStyle(
       if (date) {
           setSelectedDate(date);
           setIsButtonDisabled(false);
-      } else {
+      } 
+      else {
           setIsButtonDisabled(true);
       }
       if (Platform.OS === 'android') {
@@ -434,31 +527,33 @@ const screenAnimation = useAnimatedStyle(
       }
   };
 
-useEffect(() => {
-  if (screen === 'birthDate') {
+// useEffect(() => {
+//   if (screen === 'birthDate') {
     
-    if (hasVisitedBirthdate == false) {
+//     if (hasVisitedBirthdate == false) {
       
-      setShowDatePicker(true);
+//       setShowDatePicker(true);
     
-    }
-    setHasVisitedBirthdate(true);
-  }
+//     }
+//     setHasVisitedBirthdate(true);
+//   }
   
-}, [screen]);
+// }, [screen]);
 
 const dateTimePickerHeight = 216; // Approximate height of the DateTimePicker
 
   if (nameEntered && stateEntered && dateEntered && screen === 'complete') {
     return (
-      <Animated.View style={[styles.container, screenAnimation]}>
+      <Animated.View style={[styles.container, screenAnimation, backScreenAnimation]}>
+        
+        
         <Text style={styles.welcome}>congrats</Text>
         <Text style={styles.title}>you're ready to roll.</Text>
 
         <View style={styles.sideBySide}>
           <Pressable
             style={styles.backButtonSmall}
-            onPress={handleBack}
+            onPress={handleBackPress}
             disabled={false}
           >
             <Text style={styles.buttonText}>back</Text>
@@ -468,7 +563,9 @@ const dateTimePickerHeight = 216; // Approximate height of the DateTimePicker
 
           <Pressable
             style={styles.saveButtonSmall}
-            onPress={goHome}
+            onPress={ () => {saveButtonScale.value = 0.8;
+              setIsButtonClicked(true);
+              setIsAnimating(true);}}
             disabled={false}
           >
             <Text style={styles.buttonText}>let's go</Text>
@@ -482,7 +579,8 @@ const dateTimePickerHeight = 216; // Approximate height of the DateTimePicker
 
   if (nameEntered && stateEntered && dateEntered && screen === 'location') {
     return (
-      <Animated.View style={[styles.container, screenAnimation]}>
+      <Animated.View style={[styles.container, screenAnimation, backScreenAnimation]}>
+        
         <Text style={styles.title}>{locationText}</Text>
         <Text style={styles.title}>{(locationText === "Please enable location services.") ? "Location will be used to determine weather, estimate speed, and visually log drives on a map." : "To update location permissions, go to the Settings app."}</Text>
         
@@ -496,7 +594,7 @@ const dateTimePickerHeight = 216; // Approximate height of the DateTimePicker
 
         <Pressable
           style={styles.backButton}
-          onPress={handleBack}
+          onPress={handleBackPress}
           disabled={false}
         >
           <Text style={styles.buttonText}>back</Text>
@@ -507,7 +605,8 @@ const dateTimePickerHeight = 216; // Approximate height of the DateTimePicker
 
   if (nameEntered && stateEntered && dateEntered && screen === 'parentEmail') {
     return (
-      <Animated.View style={[styles.container, screenAnimation]}>
+      <Animated.View style={[styles.container, screenAnimation, backScreenAnimation]}>
+        
         <Text style={styles.title}>Please enter a parent's email for optional weekly practice reports.</Text>
         <Text style={styles.error}>{showEmailError ? "Please enter a valid email." : ""}</Text>
         <TextInput
@@ -537,7 +636,7 @@ const dateTimePickerHeight = 216; // Approximate height of the DateTimePicker
         <View style={styles.sideBySide}>
           <Pressable
             style={styles.backButtonSmall}
-            onPress={handleBack}
+            onPress={handleBackPress}
             disabled={false}
           >
             <Text style={styles.buttonText}>back</Text>
@@ -560,37 +659,38 @@ const dateTimePickerHeight = 216; // Approximate height of the DateTimePicker
   }
 
   if (nameEntered && stateEntered && screen === 'birthDate') {
-    
     return (
-      <Animated.View style={[styles.container, screenAnimation]}>
+      <Animated.View style={[styles.container, screenAnimation, backScreenAnimation]}>
         <Text style={styles.title}>Please enter your date of birth.</Text>
         
         {Platform.OS === 'android' && (
           <Pressable onPress={() => setShowDatePicker(true)}>
-            <Text style={styles.dateTextInput}>{selectedDate.toLocaleDateString()}</Text>
+            <Text style={styles.dateTextInput}>
+              {selectedDate.toLocaleDateString() === new Date().toLocaleDateString() ? 'Select a date' : selectedDate.toLocaleDateString()}
+            </Text>
           </Pressable>
         )}
 
-          
-        {showDatePicker && (
+        {(showDatePicker) && (
           <DateTimePicker
             value={selectedDate}
             mode="date"
-            display="spinner"
+            display={Platform.OS === 'ios' ? 'default' : 'spinner'}
+            
             maximumDate={new Date(new Date().getFullYear() - 13, new Date().getMonth(), new Date().getDate())}
             minimumDate={new Date(new Date().getFullYear() - 100, new Date().getMonth(), new Date().getDate())}
             onChange={handleDateChange}
+            
           />
         )}
 
-        {!showDatePicker && Platform.OS === 'ios' && (
-          <View style={{ height: dateTimePickerHeight }} />
-        )}
+        <View style={styles.emptySpaceSmall}></View>
+        
 
         <View style={styles.sideBySide}>
           <Pressable
             style={styles.backButtonSmall}
-            onPress={handleBack}
+            onPress={handleBackPress}
             disabled={false}
           >
             <Text style={styles.buttonText}>back</Text>
@@ -603,15 +703,12 @@ const dateTimePickerHeight = 216; // Approximate height of the DateTimePicker
               onPress={() => {
                 saveButtonScale.value = 0.8;
                 setIsButtonClicked(true);
-                setIsAnimating(true);
-                setShowDatePicker(false); // Hide the picker before saving
+                //setIsAnimating(true);
                 handleBirthdateSave();
               }}
               disabled={isButtonDisabled}
             >
-             
-                <Text style={styles.buttonText}>save</Text>
-              
+              <Text style={styles.buttonText}>save</Text>
             </Pressable>
           </Animated.View>
         </View>
@@ -625,9 +722,9 @@ const dateTimePickerHeight = 216; // Approximate height of the DateTimePicker
     return (
       <>
       
-      <Animated.View style={[styles.container, screenAnimation]}>
-      <Progress.Bar progress={0.4} width={300} height={20} animated={true} animationType='spring' />
-      <View style={styles.emptySpaceMedium}></View>
+      <Animated.View style={[styles.container, screenAnimation, backScreenAnimation]}>
+      
+      <View style={styles.emptySpaceSmall}></View>
         <Text style={styles.title}>Which state do you live in?</Text>
         <Picker
           selectedValue={selectedState}
@@ -642,14 +739,19 @@ const dateTimePickerHeight = 216; // Approximate height of the DateTimePicker
         <Picker.Item key={state} label={state} value={state} />
           ))}
         </Picker>
-        <View style={styles.emptySpaceLarge}></View>
+        {Platform.OS === 'ios' ? (
+          <View style={styles.emptySpaceLarge}></View>
+        ) : (
+          <View style={styles.emptySpaceSmall}></View>
+        )}
+        
 
         <View style={isAnimating ? styles.sideBySideAnimating : styles.sideBySide}>
 
 
           <Pressable
         style={styles.backButtonSmall}
-        onPress={handleBack}
+        onPress={handleBackPress}
         disabled={false}
           >
         <Text style={styles.buttonText}>back</Text>
@@ -665,7 +767,7 @@ const dateTimePickerHeight = 216; // Approximate height of the DateTimePicker
               onPress={() => {
                 saveButtonScale.value = 0.8;
                 setIsButtonClicked(true);
-                setIsAnimating(true);
+                //setIsAnimating(true);
                 handleStateSave();
               }}
               disabled={isButtonDisabled}
@@ -686,7 +788,7 @@ const dateTimePickerHeight = 216; // Approximate height of the DateTimePicker
       <>
       
       <Animated.View style={[styles.container, screenAnimation]}>
-      <Progress.Bar progress={0.2} width={300} height={20} animated={true} animationType='spring'  />
+      
       <View style={styles.emptySpaceMedium}></View>
         <Text style={styles.title}>Please enter your legal name.</Text>
         <TextInput
@@ -696,7 +798,10 @@ const dateTimePickerHeight = 216; // Approximate height of the DateTimePicker
           onChangeText={handleInputChange}
           placeholder="First Last"
           placeholderTextColor="#888"
-          onSubmitEditing={handleNameSave} 
+          onSubmitEditing={ () => {
+            handleNameSave();
+            setIsButtonClicked(true); 
+          }} 
         />
         <Animated.View style={[styles.sideBySide, saveButtonAnimation]}>
             <Pressable

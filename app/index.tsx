@@ -4,15 +4,20 @@ import { setItem, getItem, clear } from "./AsyncStorage";
 import { Link } from 'expo-router';
 import UserData from './UserData'; // Import UserData
 import { StatusBar } from 'expo-status-bar';
+import { styles } from './styles'; // Import styles
 
 
 
 export default function Index() {
+  
+  //clear();
+
   const [isDriving, setIsDriving] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [timer, setTimer] = useState(0);
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
   const [showUserData, setShowUserData] = useState(true);
+  const [firstName, setFirstName] = useState<string | null>(null); // Use null initially to indicate loading
 
   useEffect(() => {
     checkFirstTime();
@@ -22,11 +27,18 @@ export default function Index() {
     const firstTime = await getItem('firstTime');
     if (firstTime) {
       setShowUserData(false);
+      fetchUserData();
     }
   }
 
- 
-
+  async function fetchUserData() {
+    const userData = await getItem("userData");
+    if (userData) {
+      const name = userData.name.split(" ")[0];
+      setFirstName(name); // Update state
+      console.log(name);
+    }
+  }
 
   useEffect(() => {
     let id: NodeJS.Timeout;
@@ -44,7 +56,7 @@ export default function Index() {
   }, [isDriving, isPaused]);
 
   function handleDrive() {
-    setTimer(3590);
+    setTimer(0);
     setIsDriving(true);
     setIsPaused(false);
   }
@@ -80,23 +92,26 @@ export default function Index() {
     console.log("Drive Data:", await getItem("driveData"));
   }
 
-  clear();
-
   if (showUserData) {
-
-    return <UserData />;
-
+    return <UserData onComplete={() => setShowUserData(false)} />;
   }
 
   return (
     <View style={styles.container}>
+      {firstName !== null ? (
+        <Text style={styles.text}>Hello, {firstName}</Text>
+      ) : (
+        <Text style={styles.text}>Loading...</Text>
+      )}
+
+      <View style={styles.emptySpaceMedium} />
+
       {!isDriving ? (
         <TouchableOpacity style={styles.driveButton} onPress={handleDrive}>
           <Text style={styles.buttonText}>drive</Text>
         </TouchableOpacity>
       ) : (
         <>
-          
           <View style={styles.halfCircleContainer}>
             <TouchableOpacity style={[styles.halfCircle, styles.topHalf]} onPress={handlePause}>
               <Text style={styles.buttonText}>{isPaused ? "resume" : "pause"}</Text>
@@ -110,11 +125,11 @@ export default function Index() {
             {timer >= 3600 && (
               <>
                 <Text style={styles.biggertext}>{`${Math.floor(timer / 3600)}`}</Text>
-                <Text style={styles.text}> hr  </Text>
+                <Text style={styles.text}> hr </Text>
               </>
             )}
             <Text style={styles.biggertext}>{`${Math.floor((timer % 3600) / 60)}`}</Text>
-            <Text style={styles.text}> min  </Text>
+            <Text style={styles.text}> min </Text>
             <Text style={styles.biggertext}>{`${timer % 60}`}</Text>
             <Text style={styles.text}> sec</Text>
           </View>
@@ -127,58 +142,5 @@ export default function Index() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  timerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  driveButton: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: "#007AFF",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  halfCircleContainer: {
-    marginTop: 20,
-  },
-  halfCircle: {
-    width: 200,
-    height: 100,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  topHalf: {
-    borderTopLeftRadius: 100,
-    borderTopRightRadius: 100,
-    backgroundColor: "#FF9500",
-  },
-  bottomHalf: {
-    borderBottomLeftRadius: 100,
-    borderBottomRightRadius: 100,
-    backgroundColor: "#FF3B30",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 50,
-    
-  },
-  text: {
-    fontSize: 32,
-  },
-  biggertext: {
-    fontSize: 45,
-  },
-  linkText: {
-    fontSize: 18,
-    color: "#007AFF",
-    marginTop: 20,
-  },
-});
+
+

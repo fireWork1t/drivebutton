@@ -9,20 +9,28 @@ function refreshData(setData: React.Dispatch<React.SetStateAction<string[][]>>) 
   getItem("driveData").then(items => {
     if (items && items.length > 0) {
       const keys = Object.keys(items[0]);
-      const data: string[][] = [keys];
+      const data: string[][] = [];
 
       items.forEach((item: { [key: string]: any }) => {
         data.push(keys.map(key => {
-          if (key === "date") {
+          
+          if (key === "date") 
+            {
             const date = new Date(item[key]);
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-          } else if (key === "duration") {
+          } 
+
+          else if (key === "duration") 
+          {
             const duration = item[key];
-            if (duration >= 3600) {
+            if (duration >= 3600) 
+              {
               const hours = Math.floor(duration / 3600);
               const minutes = Math.round((duration % 3600) / 60);
               return `${hours} hr ${minutes} min`;
-            } else {
+            } 
+            else 
+            {
               const minutes = Math.round(duration / 60);
               return `${minutes} min`;
             }
@@ -45,7 +53,7 @@ function clearAndRefresh(setData: React.Dispatch<React.SetStateAction<string[][]
 function deleteDrive(rowIndex: number, setData: React.Dispatch<React.SetStateAction<string[][]>>) {
   getItem("driveData").then(items => {
     if (items && items.length > 0) {
-      items.splice(rowIndex - 1, 1); // Remove the item from the array
+      items.splice(rowIndex, 1); // Remove the item from the array
       setItem("driveData", items).then(() => refreshData(setData));
     }
   });
@@ -78,11 +86,11 @@ export default function LogScreen() {
 
         if (numValue)
         {
-          items[rowIndex - 1][Object.keys(items[0])[colIndex]] = numValue;
+          items[rowIndex][Object.keys(items[0])[colIndex]] = numValue;
         }
         else
         {
-          items[rowIndex - 1][Object.keys(items[0])[colIndex]] = targetValue; // Set the item to targetValue
+          items[rowIndex][Object.keys(items[0])[colIndex]] = targetValue; // Set the item to targetValue
         }
         
 
@@ -135,12 +143,12 @@ export default function LogScreen() {
                 <Text style={styles.rowText}>{item}</Text>
               </TouchableOpacity>
             ))}
-            {rowIndex > 0 && (
+            {(
               <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={() => handleDeletePress(rowIndex, entry)}
               >
-                <Ionicons name="trash" size={24} color="white" /> {/* Replace Text with Icon */}
+                <Ionicons name="trash" size={24} color="white" /> 
               </TouchableOpacity>
             )}
           </View>
@@ -194,7 +202,7 @@ export default function LogScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#25292e',
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -216,18 +224,22 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   row: {
-    backgroundColor: '#444',
+    backgroundColor: '#eee',
     padding: 5,
     marginVertical: 5,
-    borderRadius: 10,
+    borderRadius: 0,
     width: '95%',
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowRadius: 3,
+    shadowOpacity: 0.5,
+    shadowOffset: { width: 0, height: 1 },
   },
   item: {
-    backgroundColor: '#555',
+    backgroundColor: '#eee',
     padding: 5,
     margin: 2,
     borderRadius: 5,
@@ -237,7 +249,7 @@ const styles = StyleSheet.create({
     height: 50,
   },
   rowText: {
-    color: '#fff',
+    color: '#000',
     fontSize: 16,
     textAlign: 'center', // Center horizontally
   },
