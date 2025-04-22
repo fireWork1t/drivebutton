@@ -13,24 +13,16 @@ function refreshData(setData: React.Dispatch<React.SetStateAction<string[][]>>) 
 
       items.forEach((item: { [key: string]: any }) => {
         data.push(keys.map(key => {
-          
-          if (key === "date") 
-            {
+          if (key === "date") {
             const date = new Date(item[key]);
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-          } 
-
-          else if (key === "duration") 
-          {
+          } else if (key === "duration") {
             const duration = item[key];
-            if (duration >= 3600) 
-              {
+            if (duration >= 3600) {
               const hours = Math.floor(duration / 3600);
               const minutes = Math.round((duration % 3600) / 60);
               return `${hours} hr ${minutes} min`;
-            } 
-            else 
-            {
+            } else {
               const minutes = Math.round(duration / 60);
               return `${minutes} min`;
             }
@@ -53,7 +45,7 @@ function clearAndRefresh(setData: React.Dispatch<React.SetStateAction<string[][]
 function deleteDrive(rowIndex: number, setData: React.Dispatch<React.SetStateAction<string[][]>>) {
   getItem("driveData").then(items => {
     if (items && items.length > 0) {
-      items.splice(rowIndex, 1); // Remove the item from the array
+      items.splice(rowIndex - 1, 1); // Remove the item from the array
       setItem("driveData", items).then(() => refreshData(setData));
     }
   });
@@ -86,11 +78,11 @@ export default function LogScreen() {
 
         if (numValue)
         {
-          items[rowIndex][Object.keys(items[0])[colIndex]] = numValue;
+          items[rowIndex - 1][Object.keys(items[0])[colIndex]] = numValue;
         }
         else
         {
-          items[rowIndex][Object.keys(items[0])[colIndex]] = targetValue; // Set the item to targetValue
+          items[rowIndex - 1][Object.keys(items[0])[colIndex]] = targetValue; // Set the item to targetValue
         }
         
 
@@ -132,28 +124,33 @@ export default function LogScreen() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent} showsHorizontalScrollIndicator={Platform.OS === 'web'}>
         <View style={styles.emptySpaceSmall}></View>
-        {data.map((entry, rowIndex) => ( // Ensure data is being displayed
-          <View key={rowIndex} style={styles.row}>
-            {entry.map((item, colIndex) => (
-              <TouchableOpacity
-                key={colIndex}
-                style={styles.item}
-                onPress={() => handleItemPress(rowIndex, colIndex)}
-              >
-                <Text style={styles.rowText}>{item}</Text>
-              </TouchableOpacity>
-            ))}
-            {(
+        {data.map((entry, rowIndex) => (
+          rowIndex >= 0 && ( // Skip the first row with labels
+
+            
+            
+            <View key={rowIndex} style={styles.row}>
+              {entry.map((item, colIndex) => (
+                <Link push href={`/drive/${rowIndex}`}>
+                
+                  
+                  <Text style={styles.rowText}>{item}</Text>
+                  </Link>
+                
+              ))}
               <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={() => handleDeletePress(rowIndex, entry)}
               >
-                <Ionicons name="trash" size={24} color="white" /> 
+                <Ionicons name="trash" size={24} color="white" />
               </TouchableOpacity>
-            )}
-          </View>
+            </View>
+            
+            
+            
+
+          )
         ))}
-        
       </ScrollView>
       <View style={styles.buttonContainer}>
         <Button title="Clear Data" onPress={() => clearAndRefresh(setData)} />
@@ -224,22 +221,23 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   row: {
-    backgroundColor: '#eee',
+    backgroundColor: '#ddd',
     padding: 5,
     marginVertical: 5,
-    borderRadius: 0,
+    borderRadius: 5,
     width: '95%',
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowRadius: 3,
-    shadowOpacity: 0.5,
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 2,
+    elevation: 5,
   },
   item: {
-    backgroundColor: '#eee',
+    backgroundColor: '#ddd',
     padding: 5,
     margin: 2,
     borderRadius: 5,

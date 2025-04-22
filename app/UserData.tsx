@@ -17,7 +17,7 @@ import Animated, {
     runOnJS,
   } from 'react-native-reanimated';
 
-  clear();
+  //clear();
   
 
 const UserData = ({ onComplete }: { onComplete: () => void }) => {
@@ -322,14 +322,6 @@ const handleBackPress = () => {
       const tempData = await getItem("userData");
       if (tempData) {
         tempData.state = selectedState;
-
-        for (const state of reqs.states)
-        {
-            if (state.state = selectedState)
-            {
-               tempData.reqs = {"total": state.total_hours, "night": state.night_hours};
-            }
-        }
 
         
 
