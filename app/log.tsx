@@ -4,11 +4,12 @@ import { getItem, clear, setItem } from './AsyncStorage';
 import { Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons'; // Add this import
 import EditModal from './EditModal'; // Import EditModal
+import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
 
 function refreshData(setData: React.Dispatch<React.SetStateAction<string[][]>>) {
   getItem("driveData").then(items => {
     if (items && items.length > 0) {
-      const keys = Object.keys(items[0]);
+      const keys = Object.keys(items[0]).filter(key => key !== "route"); // Exclude the "route" property
       const data: string[][] = [];
 
       items.forEach((item: { [key: string]: any }) => {
@@ -26,6 +27,9 @@ function refreshData(setData: React.Dispatch<React.SetStateAction<string[][]>>) 
               const minutes = Math.round(duration / 60);
               return `${minutes} min`;
             }
+          } else if (key === "time") {
+            const time = new Date(item[key]);
+            return time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
           }
           return item[key].toString();
         }));
@@ -33,7 +37,7 @@ function refreshData(setData: React.Dispatch<React.SetStateAction<string[][]>>) 
 
       setData(data);
     } else {
-      setData([["No data available"]]);
+      setData([]);
     }
   });
 }
@@ -64,6 +68,12 @@ export default function LogScreen() {
   useEffect(() => {
     refreshData(setData);
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      refreshData(setData); // Refresh data when the screen is focused
+    }, [])
+  );
 
   function editItem(targetValue: string, rowIndex: number, colIndex: number) {
     getItem("driveData").then(items => {
@@ -124,19 +134,13 @@ export default function LogScreen() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContent} showsHorizontalScrollIndicator={Platform.OS === 'web'}>
         <View style={styles.emptySpaceSmall}></View>
-        {data.map((entry, rowIndex) => (
+        {data.length > 0 ? (data.map((entry, rowIndex) => (
           rowIndex >= 0 && ( // Skip the first row with labels
-
-            
-            
             <View key={rowIndex} style={styles.row}>
               {entry.map((item, colIndex) => (
-                <Link push href={`/drive/${rowIndex}`}>
-                
-                  
+                <Link key={`${rowIndex}-${colIndex}`} push href={`/drive/${rowIndex}`}>
                   <Text style={styles.rowText}>{item}</Text>
-                  </Link>
-                
+                </Link>
               ))}
               <TouchableOpacity
                 style={styles.deleteButton}
@@ -145,12 +149,8 @@ export default function LogScreen() {
                 <Ionicons name="trash" size={24} color="white" />
               </TouchableOpacity>
             </View>
-            
-            
-            
-
           )
-        ))}
+        ))) : (<Text style={styles.messageText}>Nothing here yet! Go for a drive first and come back after.</Text>)}
       </ScrollView>
       <View style={styles.buttonContainer}>
         <Button title="Clear Data" onPress={() => clearAndRefresh(setData)} />
@@ -206,6 +206,12 @@ const styles = StyleSheet.create({
   text: {
     color: '#fff',
     fontSize: 20,
+  },
+  messageText: {
+    color: '#000',
+    fontSize: 20,
+    textAlign: 'center',
+    margin: 20,
   },
   button: {
     margin: 10
@@ -282,14 +288,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContainer: {
-    backgroundColor: '#424242',
+    backgroundColor: '#fff',
     padding: 20,
     margin: 20,
     borderRadius: 10,
     alignItems: 'center',
   },
   modalText: {
-    color: '#fff',
+    color: '#000',
     fontSize: 28,
     marginBottom: 20,
     textAlign: 'center',
@@ -301,13 +307,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalEntryItem: {
-    backgroundColor: '#555',
+    backgroundColor: '#eee',
     padding: 10,
     margin: 5,
     borderRadius: 10,
   },
   modalEntryText: {
-    color: '#fff',
+    color: '#000',
     fontSize: 20,
   },
   modalButtons: {

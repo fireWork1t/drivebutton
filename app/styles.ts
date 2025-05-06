@@ -6,6 +6,16 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#ffffff',
+    
+  },
+  mapContainer: {
+    flex: 1,
+   
+    width: '70%',
+    height: '50%',
+    alignSelf: 'center',
+    backgroundColor: '#ffffff',
+    
   },
   higherContainer: {
     flex: 1,
@@ -15,6 +25,10 @@ export const styles = StyleSheet.create({
   sideBySide: {
     flexDirection: 'row',
     justifyContent: 'center',
+    width: '100%',
+  },
+  sideBySideLeft: {
+    flexDirection: 'row',
     width: '100%',
   },
   sideBySideAnimating: {
@@ -112,7 +126,8 @@ export const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   emptySpaceSmall: {
     height: 20,
@@ -158,22 +173,57 @@ export const styles = StyleSheet.create({
   biggertext: {
     fontSize: 45,
   },
+
   linkText: {
     fontSize: 18,
     color: "#007AFF",
     marginTop: 20,
   },
   progressBar: {
-    
     margin: 'auto',
-    
   },
-
-  
-  
-    
-    text: {
-      fontSize: 32,
-    },
-    
+  text: {
+    fontSize: 32,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '80%',
+    marginVertical: 10,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  editButton: {
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nightDayContainer: {
+    alignSelf: 'center',
+    marginTop: 20,
+    padding: 15,
+    borderRadius: 10,
+    backgroundColor: '#2c3e50',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  nightDayText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#ecf0f1',
+    textAlign: 'center',
+  },
+ 
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
 import { setItem, getItem, clear } from "./AsyncStorage";
 import { Link } from 'expo-router';
@@ -6,7 +6,8 @@ import UserData from './UserData'; // Import UserData
 import { StatusBar } from 'expo-status-bar';
 import reqs from '../reqs.json'; // Import requirements
 import * as Location from 'expo-location';
-import { getSunrise, getSunset } from 'sunrise-sunset-js';
+import { getSunrise, getSunset,  } from 'sunrise-sunset-js';
+var SunCalc = require('suncalc');
 import * as Updates from 'expo-updates';
 
 
@@ -22,8 +23,10 @@ export default function Index() {
   const [timer, setTimer] = useState(0);
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
   const [showUserData, setShowUserData] = useState(true);
-  const [startTime, setStartTime] = useState("");
+  const [startTime, setStartTime] = useState(new Date);
 
+  const [route, setRoute] = useState<Location.LocationObjectCoords[]>([]);
+  const locationSubscription = useRef<Location.LocationSubscription | null>(null);
 
   let firstName = "";
 
@@ -59,7 +62,25 @@ async function fetchUserData() {
   }
 
  
-  
+  const startTracking = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Permission to access location was denied');
+      return;
+    }
+
+    locationSubscription.current = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.High,
+        timeInterval: 500,
+        distanceInterval: 10, // meters
+      },
+      (location) => {
+        setRoute((prev) => [...prev, location.coords]);
+      }
+    );
+  };
+
 
 
   useEffect(() => {
@@ -86,7 +107,8 @@ async function fetchUserData() {
     setTimer(3590);
     setIsDriving(true);
     setIsPaused(false);
-    setStartTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
+    setStartTime(new Date()); // Store the full Date object
+    startTracking();
   }
 
   function handlePause() {
@@ -94,37 +116,65 @@ async function fetchUserData() {
   }
 
   async function handleStop() {
+    if (locationSubscription.current) {
+      locationSubscription.current.remove();
+    }
     if (intervalId) clearInterval(intervalId);
     setIsDriving(false);
     setIsPaused(false);
+
     setIntervalId(null);
     await logDriveData();
     setTimer(0);
-    setStartTime("");
+    setStartTime(new Date()); // Reset start time
+    setRoute([]); // Reset route
   }
 
   async function determineNight() {
-
     const position = await Location.getCurrentPositionAsync();
 
-    const sunset = getSunset(position.coords.latitude, position.coords.longitude);
-    const sunrise = getSunrise(position.coords.latitude, position.coords.longitude);
+    const sunTimes = SunCalc.getTimes(startTime, position.coords.latitude, position.coords.longitude, 0);
+
     
 
- 
-    const time_stopped = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    console.log("Sunrise: " + sunTimes.sunrise);
+    console.log("Sunset: " + sunTimes.sunset);
+    const timeStopped = new Date();
 
-    const sunset_time = sunset.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    //console.log("Start time: " + startTime);
 
-    const sunrise_time = sunrise.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const startTimeDate = new Date(startTime); // startTime is now a Date object
+    console.log("Started at " + startTimeDate);
+    console.log("Stopped at " + timeStopped);
+    console.log("Sun is down before " + sunTimes.sunrise.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " and after " + sunTimes.sunset.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
 
-    console.log("Started at " + startTime);
-    console.log("Stopped at " + time_stopped);
-    console.log("Sun is down between " + sunset_time + " and " + sunrise_time);
+    var night = false;
 
-    const night = (startTime >= sunset_time && startTime <= sunrise_time) && (time_stopped >= sunset_time && time_stopped <= sunrise_time);
+    console.log("Start time: " + startTimeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    console.log("Stopped time: " + timeStopped.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
 
-    console.log("Therefore drive was at " + (night ? "night" : "daytime"))
+    if (startTimeDate < sunTimes.sunrise && timeStopped < sunTimes.sunrise) {
+      console.log("Drive started and stopped before sunrise");
+      night = true;
+    } else if (startTimeDate > sunTimes.sunset && timeStopped > sunTimes.sunset) {
+      console.log("Drive started and stopped after sunset");
+      night = true;
+    } 
+    else
+    {
+      console.log("Drive was at least partially during the day");
+      night = false;
+    }
+
+    
+
+
+
+    //const night = (startTimeDate >= sunsetTime || startTimeDate <= sunriseTime) &&
+          //        (timeStopped >= sunsetTime || timeStopped <= sunriseTime);
+    // night will be true if the drive started and stopped between sunset and sunrise
+
+    //console.log("Therefore drive was at " + (night ? "night" : "daytime"));
 
     return (night ? "Night" : "Day");
   }
@@ -133,11 +183,15 @@ async function fetchUserData() {
 
     const night = await determineNight();
 
+
+
+    const roundedTimer = Math.round(timer / 60) * 60; // Round to the nearest minute in seconds
     const driveData = [{
-      date: new Date().toISOString().substring(0, new Date().toISOString().indexOf('T')),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      duration: timer,
+      date: new Date(),
+      time: new Date(),
+      duration: roundedTimer,
       night: night,
+      route: JSON.stringify(route),
     }];
 
     
@@ -161,7 +215,7 @@ async function fetchUserData() {
       setItem("driveData", driveData);
     }
 
-    console.log("Drive Data:", await getItem("driveData"));
+    //console.log("Drive Data:", await getItem("driveData"));
   }
 
   
